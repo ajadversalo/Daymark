@@ -67,39 +67,38 @@ __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
     'aria-hidden': "true",
 });
 (__VLS_ctx.dark ? '☀' : '☾');
+__VLS_asFunctionalElement1(__VLS_intrinsics.main, __VLS_intrinsics.main)({});
 let __VLS_12;
+/** @ts-ignore @type { | typeof __VLS_components.RouterView} */
+RouterView;
+// @ts-ignore
+const __VLS_13 = __VLS_asFunctionalComponent1(__VLS_12, new __VLS_12({}));
+const __VLS_14 = __VLS_13({}, ...__VLS_functionalComponentArgsRest(__VLS_13));
+__VLS_asFunctionalElement1(__VLS_intrinsics.footer, __VLS_intrinsics.footer)({});
+let __VLS_17;
 /** @ts-ignore @type { | typeof __VLS_components.RouterLink | typeof __VLS_components.RouterLink} */
 RouterLink;
 // @ts-ignore
-const __VLS_13 = __VLS_asFunctionalComponent1(__VLS_12, new __VLS_12({
+const __VLS_18 = __VLS_asFunctionalComponent1(__VLS_17, new __VLS_17({
     to: "/settings",
     ...{ class: "settings-link" },
     'aria-label': "Settings",
     title: "Settings",
 }));
-const __VLS_14 = __VLS_13({
+const __VLS_19 = __VLS_18({
     to: "/settings",
     ...{ class: "settings-link" },
     'aria-label': "Settings",
     title: "Settings",
-}, ...__VLS_functionalComponentArgsRest(__VLS_13));
+}, ...__VLS_functionalComponentArgsRest(__VLS_18));
 /** @type {__VLS_StyleScopedClasses['settings-link']} */ ;
-const { default: __VLS_17 } = __VLS_15.slots;
+const { default: __VLS_22 } = __VLS_20.slots;
 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
     'aria-hidden': "true",
 });
 // @ts-ignore
 [toggleTheme, dark, dark, dark,];
-var __VLS_15;
-__VLS_asFunctionalElement1(__VLS_intrinsics.main, __VLS_intrinsics.main)({});
-let __VLS_18;
-/** @ts-ignore @type { | typeof __VLS_components.RouterView} */
-RouterView;
-// @ts-ignore
-const __VLS_19 = __VLS_asFunctionalComponent1(__VLS_18, new __VLS_18({}));
-const __VLS_20 = __VLS_19({}, ...__VLS_functionalComponentArgsRest(__VLS_19));
-__VLS_asFunctionalElement1(__VLS_intrinsics.footer, __VLS_intrinsics.footer)({});
-__VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
+var __VLS_20;
 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
 // @ts-ignore
 [];

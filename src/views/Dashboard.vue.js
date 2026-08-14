@@ -1,11 +1,28 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { api, isoDate } from '../types';
-const todos = ref([]);
-const loading = ref(true);
-const error = ref('');
-const saveError = ref('');
 const today = ref(new Date());
 const todayKey = computed(() => isoDate(today.value));
+const cacheKey = (date) => `daymark-todos-${date}`;
+function readCachedTodos(date) {
+    try {
+        const cached = localStorage.getItem(cacheKey(date));
+        return cached ? JSON.parse(cached) : null;
+    }
+    catch {
+        return null;
+    }
+}
+function cacheTodos() {
+    try {
+        localStorage.setItem(cacheKey(todayKey.value), JSON.stringify(todos.value));
+    }
+    catch { /* Storage may be unavailable. */ }
+}
+const initialCache = readCachedTodos(todayKey.value);
+const todos = ref(initialCache ?? []);
+const loading = ref(initialCache === null);
+const error = ref('');
+const saveError = ref('');
 const todayIndex = computed(() => today.value.getDay());
 const dateLabel = computed(() => today.value.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }));
 const todaysTodos = computed(() => todos.value.filter(t => t.days.includes(todayIndex.value)));
@@ -14,7 +31,7 @@ const overallProgress = computed(() => {
         return 0;
     return Math.round(todaysTodos.value.reduce((total, todo) => total + taskPercentage(todo), 0) / todaysTodos.value.length);
 });
-const progressSeconds = ref({});
+const progressSeconds = ref(Object.fromEntries((initialCache ?? []).map(todo => [todo.id, Number(todo.elapsed_seconds) || 0])));
 const activeTodo = ref(null);
 const secondsLeft = ref(30 * 60);
 const timerDuration = ref(30 * 60);
@@ -39,15 +56,22 @@ function taskTimeLabel(todo) {
     return `${format(elapsed)} of ${format(total)}`;
 }
 async function loadTodos() {
-    loading.value = true;
+    const cached = readCachedTodos(todayKey.value);
+    if (cached) {
+        todos.value = cached;
+        progressSeconds.value = Object.fromEntries(cached.map(todo => [todo.id, Number(todo.elapsed_seconds) || 0]));
+    }
+    loading.value = cached === null;
     try {
         const rows = await api();
-        todos.value = rows.map(t => ({ ...t, days: JSON.parse(t.days), elapsed_seconds: Number(t.elapsed_seconds) || 0 }));
+        todos.value = rows.map(t => ({ ...t, days: Array.isArray(t.days) ? t.days : JSON.parse(t.days), elapsed_seconds: Number(t.elapsed_seconds) || 0 }));
         progressSeconds.value = Object.fromEntries(todos.value.map(todo => [todo.id, todo.elapsed_seconds]));
+        cacheTodos();
         error.value = '';
     }
     catch (e) {
-        error.value = e instanceof Error ? e.message : 'Could not load todos';
+        if (cached === null)
+            error.value = e instanceof Error ? e.message : 'Could not load todos';
     }
     finally {
         loading.value = false;
@@ -56,8 +80,11 @@ async function loadTodos() {
 function refreshLocalDate() {
     const previousDate = todayKey.value;
     today.value = new Date();
-    if (todayKey.value !== previousDate)
+    if (todayKey.value !== previousDate) {
+        todos.value = readCachedTodos(todayKey.value) ?? [];
+        progressSeconds.value = Object.fromEntries(todos.value.map(todo => [todo.id, Number(todo.elapsed_seconds) || 0]));
         void loadTodos();
+    }
     scheduleLocalMidnight();
 }
 function scheduleLocalMidnight() {
@@ -110,6 +137,7 @@ async function completeActiveTodo() {
     todo.completed = true;
     try {
         await api('PATCH', { id: todo.id, date: isoDate(), completed: true });
+        cacheTodos();
     }
     catch {
         todo.completed = false;
@@ -122,6 +150,7 @@ async function persistProgress(todo) {
     todo.elapsed_seconds = elapsed;
     try {
         await api('PATCH', { id: todo.id, date: isoDate(), elapsed_seconds: elapsed });
+        cacheTodos();
         saveError.value = '';
     }
     catch (cause) {
@@ -140,6 +169,7 @@ async function toggleUntimed() {
     todo.completed = !previous;
     try {
         await api('PATCH', { id: todo.id, date: isoDate(), completed: Boolean(todo.completed) });
+        cacheTodos();
         if (!previous)
             closeTimer();
     }
