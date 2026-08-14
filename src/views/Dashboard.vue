@@ -191,8 +191,6 @@ function playCompletionChime() {
       </li>
     </ul>
   </section>
-  <p class="dashboard-note">Need to change your routine? <RouterLink to="/settings">Manage it in Settings →</RouterLink></p>
-
   <Teleport to="body">
     <div v-if="activeTodo" class="modal-backdrop" role="presentation" @click="closeTimer">
       <section class="timer-modal" role="dialog" aria-modal="true" aria-labelledby="timer-title" @click.stop>

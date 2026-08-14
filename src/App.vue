@@ -17,10 +17,10 @@ applyTheme()
     <header>
       <RouterLink to="/" class="brand" aria-label="Daymark home"><span class="brand-mark">✓</span> daymark</RouterLink>
       <nav aria-label="Main navigation">
-        <RouterLink to="/">Today</RouterLink><RouterLink to="/settings" class="settings-link" aria-label="Settings" title="Settings"><span aria-hidden="true">⚙︎</span></RouterLink><button class="theme-toggle" :aria-label="`Switch to ${dark ? 'light' : 'dark'} mode`" :title="`${dark ? 'Light' : 'Dark'} mode`" @click="toggleTheme"><span aria-hidden="true">{{ dark ? '☀' : '☾' }}</span></button>
+        <RouterLink to="/">Today</RouterLink><button class="theme-toggle" :aria-label="`Switch to ${dark ? 'light' : 'dark'} mode`" :title="`${dark ? 'Light' : 'Dark'} mode`" @click="toggleTheme"><span aria-hidden="true">{{ dark ? '☀' : '☾' }}</span></button>
       </nav>
     </header>
     <main><RouterView /></main>
-    <footer><span>Small steps, every day.</span></footer>
+    <footer><RouterLink to="/settings" class="settings-link" aria-label="Settings" title="Settings"><span aria-hidden="true">⚙︎</span></RouterLink><span>Small steps, every day.</span></footer>
   </div>
 </template>

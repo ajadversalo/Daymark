@@ -380,35 +380,17 @@ else {
         [taskPercentage, taskPercentage, taskPercentage, taskTimeLabel,];
     }
 }
-__VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
-    ...{ class: "dashboard-note" },
-});
-/** @type {__VLS_StyleScopedClasses['dashboard-note']} */ ;
 let __VLS_0;
-/** @ts-ignore @type { | typeof __VLS_components.RouterLink | typeof __VLS_components.RouterLink} */
-RouterLink;
-// @ts-ignore
-const __VLS_1 = __VLS_asFunctionalComponent1(__VLS_0, new __VLS_0({
-    to: "/settings",
-}));
-const __VLS_2 = __VLS_1({
-    to: "/settings",
-}, ...__VLS_functionalComponentArgsRest(__VLS_1));
-const { default: __VLS_5 } = __VLS_3.slots;
-// @ts-ignore
-[];
-var __VLS_3;
-let __VLS_6;
 /** @ts-ignore @type { | typeof __VLS_components.Teleport | typeof __VLS_components.Teleport} */
 Teleport;
 // @ts-ignore
-const __VLS_7 = __VLS_asFunctionalComponent1(__VLS_6, new __VLS_6({
+const __VLS_1 = __VLS_asFunctionalComponent1(__VLS_0, new __VLS_0({
     to: "body",
 }));
-const __VLS_8 = __VLS_7({
+const __VLS_2 = __VLS_1({
     to: "body",
-}, ...__VLS_functionalComponentArgsRest(__VLS_7));
-const { default: __VLS_11 } = __VLS_9.slots;
+}, ...__VLS_functionalComponentArgsRest(__VLS_1));
+const { default: __VLS_5 } = __VLS_3.slots;
 if (__VLS_ctx.activeTodo) {
     __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
         ...{ onClick: (__VLS_ctx.closeTimer) },
@@ -504,7 +486,7 @@ if (__VLS_ctx.activeTodo) {
 }
 // @ts-ignore
 [activeTodo, activeTodo, activeTodo, timerDuration, timerDuration, secondsLeft, secondsLeft, running, running, toggleUntimed,];
-var __VLS_9;
+var __VLS_3;
 // @ts-ignore
 [];
 const __VLS_export = (await import('vue')).defineComponent({});
