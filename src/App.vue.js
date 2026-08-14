@@ -1,4 +1,13 @@
+import { ref } from 'vue';
 import { RouterLink, RouterView } from 'vue-router';
+const savedTheme = localStorage.getItem('daymark-theme');
+const dark = ref(savedTheme ? savedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches);
+function applyTheme() {
+    document.documentElement.dataset.theme = dark.value ? 'dark' : 'light';
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark.value ? '#071c2e' : '#1769aa');
+}
+function toggleTheme() { dark.value = !dark.value; localStorage.setItem('daymark-theme', dark.value ? 'dark' : 'light'); applyTheme(); }
+applyTheme();
 const __VLS_ctx = {
     ...{},
     ...{},
@@ -47,6 +56,17 @@ const __VLS_8 = __VLS_7({
 }, ...__VLS_functionalComponentArgsRest(__VLS_7));
 const { default: __VLS_11 } = __VLS_9.slots;
 var __VLS_9;
+__VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+    ...{ onClick: (__VLS_ctx.toggleTheme) },
+    ...{ class: "theme-toggle" },
+    'aria-label': (`Switch to ${__VLS_ctx.dark ? 'light' : 'dark'} mode`),
+    title: (`${__VLS_ctx.dark ? 'Light' : 'Dark'} mode`),
+});
+/** @type {__VLS_StyleScopedClasses['theme-toggle']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+    'aria-hidden': "true",
+});
+(__VLS_ctx.dark ? '☀' : '☾');
 let __VLS_12;
 /** @ts-ignore @type { | typeof __VLS_components.RouterLink | typeof __VLS_components.RouterLink} */
 RouterLink;
@@ -68,6 +88,8 @@ const { default: __VLS_17 } = __VLS_15.slots;
 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
     'aria-hidden': "true",
 });
+// @ts-ignore
+[toggleTheme, dark, dark, dark,];
 var __VLS_15;
 __VLS_asFunctionalElement1(__VLS_intrinsics.main, __VLS_intrinsics.main)({});
 let __VLS_18;
@@ -79,5 +101,7 @@ const __VLS_20 = __VLS_19({}, ...__VLS_functionalComponentArgsRest(__VLS_19));
 __VLS_asFunctionalElement1(__VLS_intrinsics.footer, __VLS_intrinsics.footer)({});
 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
+// @ts-ignore
+[];
 const __VLS_export = (await import('vue')).defineComponent({});
 export default {};
