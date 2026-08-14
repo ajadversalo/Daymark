@@ -4,6 +4,7 @@ const todos = ref([]);
 const title = ref('');
 const duration = ref(30);
 const days = ref([1, 2, 3, 4, 5]);
+const scheduleType = ref('recurring');
 const error = ref('');
 const saving = ref(false);
 const editingId = ref(null);
@@ -22,13 +23,14 @@ catch (e) {
 } }
 onMounted(load);
 function dayToggle(day) { days.value = days.value.includes(day) ? days.value.filter(d => d !== day) : [...days.value, day].sort(); }
-async function add() { if (!title.value.trim() || !days.value.length || duration.value < 0)
+async function add() { if (!title.value.trim() || (scheduleType.value === 'recurring' && !days.value.length) || duration.value < 0)
     return; saving.value = true; error.value = ''; try {
-    const item = await api('POST', { title: title.value.trim(), days: days.value, duration_minutes: duration.value });
+    const item = await api('POST', { title: title.value.trim(), days: scheduleType.value === 'once' ? [] : days.value, one_time: scheduleType.value === 'once', duration_minutes: duration.value });
     todos.value.push({ ...item, completed: false });
     title.value = '';
     duration.value = 30;
     days.value = [1, 2, 3, 4, 5];
+    scheduleType.value = 'recurring';
     showAdd.value = false;
 }
 catch (e) {
@@ -178,7 +180,7 @@ else {
             __VLS_asFunctionalElement1(__VLS_intrinsics.strong, __VLS_intrinsics.strong)({});
             (todo.title);
             __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({});
-            (todo.days.map(d => __VLS_ctx.dayNames[d]).join(' · '));
+            (todo.one_time ? `One time${todo.completed ? ' · Done' : ''}` : todo.days.map(d => __VLS_ctx.dayNames[d]).join(' · '));
             ((todo.duration_minutes ?? 30) === 0 ? 'Untimed' : `${todo.duration_minutes ?? 30} min`);
             __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
                 ...{ class: "item-actions" },
@@ -338,27 +340,69 @@ if (__VLS_ctx.showAdd) {
     __VLS_asFunctionalElement1(__VLS_intrinsics.fieldset, __VLS_intrinsics.fieldset)({});
     __VLS_asFunctionalElement1(__VLS_intrinsics.legend, __VLS_intrinsics.legend)({});
     __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
-        ...{ class: "day-picker" },
+        ...{ class: "schedule-picker" },
     });
-    /** @type {__VLS_StyleScopedClasses['day-picker']} */ ;
-    for (const [day, i] of __VLS_vFor((__VLS_ctx.dayNames))) {
-        __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
-            ...{ onClick: (...[$event]) => {
-                    if (!(__VLS_ctx.showAdd))
-                        throw 0;
-                    return (__VLS_ctx.dayToggle(i));
-                    // @ts-ignore
-                    [dayNames, title, duration, dayToggle,];
-                } },
-            key: (day),
-            type: "button",
-            ...{ class: ({ active: __VLS_ctx.days.includes(i) }) },
-            'aria-pressed': (__VLS_ctx.days.includes(i)),
+    /** @type {__VLS_StyleScopedClasses['schedule-picker']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.showAdd))
+                    throw 0;
+                return (__VLS_ctx.scheduleType = 'recurring');
+                // @ts-ignore
+                [title, duration, scheduleType,];
+            } },
+        type: "button",
+        ...{ class: ({ active: __VLS_ctx.scheduleType === 'recurring' }) },
+        'aria-pressed': (__VLS_ctx.scheduleType === 'recurring'),
+    });
+    /** @type {__VLS_StyleScopedClasses['active']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.showAdd))
+                    throw 0;
+                return (__VLS_ctx.scheduleType = 'once');
+                // @ts-ignore
+                [scheduleType, scheduleType, scheduleType,];
+            } },
+        type: "button",
+        ...{ class: ({ active: __VLS_ctx.scheduleType === 'once' }) },
+        'aria-pressed': (__VLS_ctx.scheduleType === 'once'),
+    });
+    /** @type {__VLS_StyleScopedClasses['active']} */ ;
+    if (__VLS_ctx.scheduleType === 'once') {
+        __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+            ...{ class: "field-help" },
         });
-        /** @type {__VLS_StyleScopedClasses['active']} */ ;
-        (day.slice(0, 1));
-        // @ts-ignore
-        [days, days,];
+        /** @type {__VLS_StyleScopedClasses['field-help']} */ ;
+    }
+    if (__VLS_ctx.scheduleType === 'recurring') {
+        __VLS_asFunctionalElement1(__VLS_intrinsics.fieldset, __VLS_intrinsics.fieldset)({});
+        __VLS_asFunctionalElement1(__VLS_intrinsics.legend, __VLS_intrinsics.legend)({});
+        __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+            ...{ class: "day-picker" },
+        });
+        /** @type {__VLS_StyleScopedClasses['day-picker']} */ ;
+        for (const [day, i] of __VLS_vFor((__VLS_ctx.dayNames))) {
+            __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.showAdd))
+                            throw 0;
+                        if (!(__VLS_ctx.scheduleType === 'recurring'))
+                            throw 0;
+                        return (__VLS_ctx.dayToggle(i));
+                        // @ts-ignore
+                        [dayNames, scheduleType, scheduleType, scheduleType, scheduleType, dayToggle,];
+                    } },
+                key: (day),
+                type: "button",
+                ...{ class: ({ active: __VLS_ctx.days.includes(i) }) },
+                'aria-pressed': (__VLS_ctx.days.includes(i)),
+            });
+            /** @type {__VLS_StyleScopedClasses['active']} */ ;
+            (day.slice(0, 1));
+            // @ts-ignore
+            [days, days,];
+        }
     }
     if (__VLS_ctx.error) {
         __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
@@ -369,14 +413,14 @@ if (__VLS_ctx.showAdd) {
     }
     __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
         ...{ class: "primary" },
-        disabled: (__VLS_ctx.saving || !__VLS_ctx.title.trim() || !__VLS_ctx.days.length || __VLS_ctx.duration < 0),
+        disabled: (__VLS_ctx.saving || !__VLS_ctx.title.trim() || (__VLS_ctx.scheduleType === 'recurring' && !__VLS_ctx.days.length) || __VLS_ctx.duration < 0),
     });
     /** @type {__VLS_StyleScopedClasses['primary']} */ ;
     (__VLS_ctx.saving ? 'Adding…' : 'Add item');
     __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
 }
 // @ts-ignore
-[error, error, title, duration, days, saving, saving,];
+[error, error, title, duration, scheduleType, days, saving, saving,];
 var __VLS_3;
 let __VLS_6;
 /** @ts-ignore @type { | typeof __VLS_components.Teleport | typeof __VLS_components.Teleport} */

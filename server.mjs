@@ -28,6 +28,8 @@ async function initialize(db) {
   ])
   const columns = await db.execute('PRAGMA table_info(todos)')
   if (!columns.rows.some(row => String(row.name) === 'duration_minutes')) await db.execute('ALTER TABLE todos ADD COLUMN duration_minutes INTEGER NOT NULL DEFAULT 30')
+  if (!columns.rows.some(row => String(row.name) === 'one_time')) await db.execute('ALTER TABLE todos ADD COLUMN one_time INTEGER NOT NULL DEFAULT 0')
+  if (!columns.rows.some(row => String(row.name) === 'completed_once')) await db.execute('ALTER TABLE todos ADD COLUMN completed_once INTEGER NOT NULL DEFAULT 0')
 }
 
 app.all('/api/todos', async (request, response) => {
@@ -37,16 +39,17 @@ app.all('/api/todos', async (request, response) => {
     const body = request.body || {}
     if (request.method === 'GET') {
       const date = String(request.query.date || '')
-      const result = await db.execute({ sql: `SELECT t.id, t.title, t.days, t.duration_minutes, COALESCE(p.elapsed_seconds, 0) elapsed_seconds, CASE WHEN c.todo_id IS NULL THEN 0 ELSE 1 END completed FROM todos t LEFT JOIN completions c ON c.todo_id=t.id AND c.completed_on=? LEFT JOIN focus_progress p ON p.todo_id=t.id AND p.progress_on=? ORDER BY t.created_at`, args: [date, date] })
+      const result = await db.execute({ sql: `SELECT t.id, t.title, t.days, t.one_time, t.duration_minutes, COALESCE(p.elapsed_seconds, 0) elapsed_seconds, CASE WHEN t.one_time=1 THEN t.completed_once WHEN c.todo_id IS NULL THEN 0 ELSE 1 END completed FROM todos t LEFT JOIN completions c ON c.todo_id=t.id AND c.completed_on=? LEFT JOIN focus_progress p ON p.todo_id=t.id AND p.progress_on=? ORDER BY t.created_at`, args: [date, date] })
       return response.json(result.rows)
     }
     if (request.method === 'POST') {
       const title = String(body.title || '').trim().slice(0, 100)
-      if (!title || !Array.isArray(body.days)) return response.status(400).json({ error: 'A title and schedule are required.' })
+      const oneTime = Boolean(body.one_time)
+      if (!title || !Array.isArray(body.days) || (!oneTime && !body.days.length)) return response.status(400).json({ error: 'A title and valid schedule are required.' })
       const requested = Number(body.duration_minutes)
       const duration = Number.isFinite(requested) ? Math.max(0, Math.min(240, requested)) : 30
-      const result = await db.execute({ sql: 'INSERT INTO todos(title, days, duration_minutes) VALUES (?, ?, ?)', args: [title, JSON.stringify(body.days), duration] })
-      return response.status(201).json({ id: Number(result.lastInsertRowid), title, days: body.days, duration_minutes: duration, elapsed_seconds: 0 })
+      const result = await db.execute({ sql: 'INSERT INTO todos(title, days, one_time, duration_minutes) VALUES (?, ?, ?, ?)', args: [title, JSON.stringify(oneTime ? [] : body.days), oneTime ? 1 : 0, duration] })
+      return response.status(201).json({ id: Number(result.lastInsertRowid), title, days: oneTime ? [] : body.days, one_time: oneTime, duration_minutes: duration, elapsed_seconds: 0 })
     }
     if (request.method === 'PATCH') {
       if (body.clear_progress_on !== undefined) {
@@ -59,6 +62,7 @@ app.all('/api/todos', async (request, response) => {
         return response.json({ ok: true })
       }
       if (body.title !== undefined) await db.execute({ sql: 'UPDATE todos SET title=? WHERE id=?', args: [String(body.title).trim().slice(0, 100), body.id] })
+      if (body.completed !== undefined) await db.execute({ sql: 'UPDATE todos SET completed_once=? WHERE id=? AND one_time=1', args: [body.completed ? 1 : 0, body.id] })
       if (body.elapsed_seconds !== undefined) await db.execute({ sql: 'INSERT INTO focus_progress(todo_id, progress_on, elapsed_seconds) VALUES (?, ?, ?) ON CONFLICT(todo_id, progress_on) DO UPDATE SET elapsed_seconds=excluded.elapsed_seconds', args: [body.id, body.date, Math.max(0, Number(body.elapsed_seconds) || 0)] })
       if (body.completed !== undefined) await db.execute(body.completed
         ? { sql: 'INSERT OR IGNORE INTO completions(todo_id, completed_on) VALUES (?, ?)', args: [body.id, body.date] }

@@ -1,4 +1,4 @@
-export type Todo = { id: number; title: string; days: number[]; duration_minutes: number; elapsed_seconds: number; completed: number | boolean }
+export type Todo = { id: number; title: string; days: number[]; one_time?: number | boolean; duration_minutes: number; elapsed_seconds: number; completed: number | boolean }
 export const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 export function isoDate(date = new Date()) {
   const year = date.getFullYear()

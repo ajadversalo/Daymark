@@ -22,17 +22,21 @@ function tursoApi(): Plugin {
           ])
           const columns = await client.execute('PRAGMA table_info(todos)')
           if (!columns.rows.some(row => String(row.name) === 'duration_minutes')) await client.execute('ALTER TABLE todos ADD COLUMN duration_minutes INTEGER NOT NULL DEFAULT 30')
+          if (!columns.rows.some(row => String(row.name) === 'one_time')) await client.execute('ALTER TABLE todos ADD COLUMN one_time INTEGER NOT NULL DEFAULT 0')
+          if (!columns.rows.some(row => String(row.name) === 'completed_once')) await client.execute('ALTER TABLE todos ADD COLUMN completed_once INTEGER NOT NULL DEFAULT 0')
           const body = await new Promise<any>((resolve) => { let raw=''; req.on('data', c => raw += c); req.on('end', () => resolve(raw ? JSON.parse(raw) : {})) })
           if (req.method === 'GET') {
             const date = String(body.date || new URL(req.url || '', 'http://x').searchParams.get('date') || '')
-            const result = await client.execute({ sql: `SELECT t.id, t.title, t.days, t.duration_minutes, COALESCE(p.elapsed_seconds, 0) elapsed_seconds, CASE WHEN c.todo_id IS NULL THEN 0 ELSE 1 END completed FROM todos t LEFT JOIN completions c ON c.todo_id=t.id AND c.completed_on=? LEFT JOIN focus_progress p ON p.todo_id=t.id AND p.progress_on=? ORDER BY t.created_at`, args: [date, date] })
+            const result = await client.execute({ sql: `SELECT t.id, t.title, t.days, t.one_time, t.duration_minutes, COALESCE(p.elapsed_seconds, 0) elapsed_seconds, CASE WHEN t.one_time=1 THEN t.completed_once WHEN c.todo_id IS NULL THEN 0 ELSE 1 END completed FROM todos t LEFT JOIN completions c ON c.todo_id=t.id AND c.completed_on=? LEFT JOIN focus_progress p ON p.todo_id=t.id AND p.progress_on=? ORDER BY t.created_at`, args: [date, date] })
             res.end(JSON.stringify(result.rows)); return
           }
           if (req.method === 'POST') {
             const requestedDuration = Number(body.duration_minutes)
             const duration = Number.isFinite(requestedDuration) ? Math.max(0, Math.min(240, requestedDuration)) : 30
-            const result = await client.execute({ sql: 'INSERT INTO todos(title, days, duration_minutes) VALUES (?, ?, ?)', args: [body.title, JSON.stringify(body.days), duration] })
-            res.statusCode = 201; res.end(JSON.stringify({ id: Number(result.lastInsertRowid), ...body, duration_minutes: duration })); return
+            const oneTime = Boolean(body.one_time)
+            if (!oneTime && (!Array.isArray(body.days) || !body.days.length)) { res.statusCode = 400; res.end(JSON.stringify({ error: 'A valid schedule is required.' })); return }
+            const result = await client.execute({ sql: 'INSERT INTO todos(title, days, one_time, duration_minutes) VALUES (?, ?, ?, ?)', args: [body.title, JSON.stringify(oneTime ? [] : body.days), oneTime ? 1 : 0, duration] })
+            res.statusCode = 201; res.end(JSON.stringify({ id: Number(result.lastInsertRowid), ...body, days: oneTime ? [] : body.days, one_time: oneTime, duration_minutes: duration })); return
           }
           if (req.method === 'PATCH') {
             if (body.clear_progress_on !== undefined) {
@@ -45,6 +49,7 @@ function tursoApi(): Plugin {
               res.end(JSON.stringify({ ok: true })); return
             }
             if (body.title !== undefined) await client.execute({ sql: 'UPDATE todos SET title=? WHERE id=?', args: [String(body.title).trim().slice(0, 100), body.id] })
+            if (body.completed !== undefined) await client.execute({ sql: 'UPDATE todos SET completed_once=? WHERE id=? AND one_time=1', args: [body.completed ? 1 : 0, body.id] })
             if (body.elapsed_seconds !== undefined) await client.execute({ sql: 'INSERT INTO focus_progress(todo_id, progress_on, elapsed_seconds) VALUES (?, ?, ?) ON CONFLICT(todo_id, progress_on) DO UPDATE SET elapsed_seconds=excluded.elapsed_seconds', args: [body.id, body.date, Math.max(0, Number(body.elapsed_seconds) || 0)] })
             if (body.completed !== undefined) {
               if (body.completed) await client.execute({ sql: 'INSERT OR IGNORE INTO completions(todo_id, completed_on) VALUES (?, ?)', args: [body.id, body.date] })

@@ -16,9 +16,11 @@ function cacheTodos() {
 }
 const initialCache = readCachedTodos(todayKey.value)
 const todos = ref<Todo[]>(initialCache ?? []); const loading = ref(initialCache === null); const error = ref(''); const saveError = ref('')
+const compactList = ref(localStorage.getItem('daymark-compact-list') === 'true')
+function toggleCompactList() { compactList.value = !compactList.value; localStorage.setItem('daymark-compact-list', String(compactList.value)) }
 const todayIndex = computed(() => today.value.getDay())
 const dateLabel = computed(() => today.value.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }))
-const todaysTodos = computed(() => todos.value.filter(t => t.days.includes(todayIndex.value)))
+const todaysTodos = computed(() => todos.value.filter(t => t.one_time ? !t.completed : t.days.includes(todayIndex.value)))
 const overallProgress = computed(() => {
   if (!todaysTodos.value.length) return 0
   return Math.round(todaysTodos.value.reduce((total, todo) => total + taskPercentage(todo), 0) / todaysTodos.value.length)
@@ -173,8 +175,8 @@ function playCompletionChime() {
       <span>Overall progress</span>
     </div>
   </section>
-  <section class="card focus-card" aria-live="polite">
-    <div class="card-head"><div><p class="eyebrow">Today’s focus</p><h2>{{ todaysTodos.length }} {{ todaysTodos.length === 1 ? 'task' : 'tasks' }}</h2></div><span class="list-readonly">Select a task to begin</span></div>
+  <section class="card focus-card" :class="{ 'compact-list': compactList }" aria-live="polite">
+    <div class="card-head"><div><p class="eyebrow">Today’s focus</p><h2>{{ todaysTodos.length }} {{ todaysTodos.length === 1 ? 'task' : 'tasks' }}</h2></div><div class="list-head-actions"><span class="list-readonly">Select a task to begin</span><button v-if="todaysTodos.length" class="density-toggle" :aria-pressed="compactList" @click="toggleCompactList">{{ compactList ? 'Comfortable' : 'Condense' }}</button></div></div>
     <p v-if="saveError" class="save-error" role="alert">Progress isn’t saving: {{ saveError }}</p>
     <p v-if="loading" class="state">Gathering your day…</p>
     <div v-else-if="error" class="state error"><strong>We couldn’t reach your list.</strong><br>{{ error }}</div>

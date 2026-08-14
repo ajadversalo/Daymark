@@ -23,9 +23,11 @@ const todos = ref(initialCache ?? []);
 const loading = ref(initialCache === null);
 const error = ref('');
 const saveError = ref('');
+const compactList = ref(localStorage.getItem('daymark-compact-list') === 'true');
+function toggleCompactList() { compactList.value = !compactList.value; localStorage.setItem('daymark-compact-list', String(compactList.value)); }
 const todayIndex = computed(() => today.value.getDay());
 const dateLabel = computed(() => today.value.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }));
-const todaysTodos = computed(() => todos.value.filter(t => t.days.includes(todayIndex.value)));
+const todaysTodos = computed(() => todos.value.filter(t => t.one_time ? !t.completed : t.days.includes(todayIndex.value)));
 const overallProgress = computed(() => {
     if (!todaysTodos.value.length)
         return 0;
@@ -252,10 +254,12 @@ __VLS_asFunctionalElement1(__VLS_intrinsics.strong, __VLS_intrinsics.strong)({})
 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
 __VLS_asFunctionalElement1(__VLS_intrinsics.section, __VLS_intrinsics.section)({
     ...{ class: "card focus-card" },
+    ...{ class: ({ 'compact-list': __VLS_ctx.compactList }) },
     'aria-live': "polite",
 });
 /** @type {__VLS_StyleScopedClasses['card']} */ ;
 /** @type {__VLS_StyleScopedClasses['focus-card']} */ ;
+/** @type {__VLS_StyleScopedClasses['compact-list']} */ ;
 __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
     ...{ class: "card-head" },
 });
@@ -268,10 +272,23 @@ __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
 __VLS_asFunctionalElement1(__VLS_intrinsics.h2, __VLS_intrinsics.h2)({});
 (__VLS_ctx.todaysTodos.length);
 (__VLS_ctx.todaysTodos.length === 1 ? 'task' : 'tasks');
+__VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+    ...{ class: "list-head-actions" },
+});
+/** @type {__VLS_StyleScopedClasses['list-head-actions']} */ ;
 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
     ...{ class: "list-readonly" },
 });
 /** @type {__VLS_StyleScopedClasses['list-readonly']} */ ;
+if (__VLS_ctx.todaysTodos.length) {
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (__VLS_ctx.toggleCompactList) },
+        ...{ class: "density-toggle" },
+        'aria-pressed': (__VLS_ctx.compactList),
+    });
+    /** @type {__VLS_StyleScopedClasses['density-toggle']} */ ;
+    (__VLS_ctx.compactList ? 'Comfortable' : 'Condense');
+}
 if (__VLS_ctx.saveError) {
     __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
         ...{ class: "save-error" },
@@ -329,7 +346,7 @@ else {
                         throw 0;
                     return (__VLS_ctx.openTimer(todo));
                     // @ts-ignore
-                    [dateLabel, overallProgress, overallProgress, overallProgress, todaysTodos, todaysTodos, todaysTodos, todaysTodos, todaysTodos, saveError, saveError, loading, error, error, openTimer,];
+                    [dateLabel, overallProgress, overallProgress, overallProgress, todaysTodos, todaysTodos, todaysTodos, todaysTodos, todaysTodos, todaysTodos, compactList, compactList, compactList, toggleCompactList, saveError, saveError, loading, error, error, openTimer,];
                 } },
             ...{ class: "task-open" },
         });
