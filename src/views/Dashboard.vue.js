@@ -8,6 +8,11 @@ const today = new Date();
 const todayIndex = today.getDay();
 const dateLabel = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 const todaysTodos = computed(() => todos.value.filter(t => t.days.includes(todayIndex)));
+const overallProgress = computed(() => {
+    if (!todaysTodos.value.length)
+        return 0;
+    return Math.round(todaysTodos.value.reduce((total, todo) => total + taskPercentage(todo), 0) / todaysTodos.value.length);
+});
 const progressSeconds = ref({});
 const activeTodo = ref(null);
 const secondsLeft = ref(30 * 60);
@@ -158,10 +163,16 @@ const __VLS_ctx = {
 let __VLS_components;
 let __VLS_intrinsics;
 let __VLS_directives;
+__VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+    ...{ class: "dashboard-view" },
+});
+/** @type {__VLS_StyleScopedClasses['dashboard-view']} */ ;
 __VLS_asFunctionalElement1(__VLS_intrinsics.section, __VLS_intrinsics.section)({
-    ...{ class: "hero" },
+    ...{ class: "hero dashboard-hero" },
 });
 /** @type {__VLS_StyleScopedClasses['hero']} */ ;
+/** @type {__VLS_StyleScopedClasses['dashboard-hero']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({});
 __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
     ...{ class: "eyebrow" },
 });
@@ -172,11 +183,26 @@ __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
     ...{ class: "lede" },
 });
 /** @type {__VLS_StyleScopedClasses['lede']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+    ...{ class: "overall-progress" },
+    role: "img",
+    'aria-label': (`${__VLS_ctx.overallProgress}% overall progress across ${__VLS_ctx.todaysTodos.length} tasks`),
+});
+/** @type {__VLS_StyleScopedClasses['overall-progress']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+    ...{ class: "progress-pie" },
+    ...{ style: ({ '--overall-progress': __VLS_ctx.overallProgress + '%' }) },
+});
+/** @type {__VLS_StyleScopedClasses['progress-pie']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.strong, __VLS_intrinsics.strong)({});
+(__VLS_ctx.overallProgress);
+__VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
 __VLS_asFunctionalElement1(__VLS_intrinsics.section, __VLS_intrinsics.section)({
-    ...{ class: "card" },
+    ...{ class: "card focus-card" },
     'aria-live': "polite",
 });
 /** @type {__VLS_StyleScopedClasses['card']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus-card']} */ ;
 __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
     ...{ class: "card-head" },
 });
@@ -250,7 +276,7 @@ else {
                         throw 0;
                     return (__VLS_ctx.openTimer(todo));
                     // @ts-ignore
-                    [dateLabel, todaysTodos, todaysTodos, todaysTodos, todaysTodos, saveError, saveError, loading, error, error, openTimer,];
+                    [dateLabel, overallProgress, overallProgress, overallProgress, todaysTodos, todaysTodos, todaysTodos, todaysTodos, todaysTodos, saveError, saveError, loading, error, error, openTimer,];
                 } },
             ...{ class: "task-open" },
         });

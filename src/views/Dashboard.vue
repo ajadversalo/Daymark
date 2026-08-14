@@ -6,6 +6,10 @@ const todos = ref<Todo[]>([]); const loading = ref(true); const error = ref('');
 const today = new Date(); const todayIndex = today.getDay()
 const dateLabel = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 const todaysTodos = computed(() => todos.value.filter(t => t.days.includes(todayIndex)))
+const overallProgress = computed(() => {
+  if (!todaysTodos.value.length) return 0
+  return Math.round(todaysTodos.value.reduce((total, todo) => total + taskPercentage(todo), 0) / todaysTodos.value.length)
+})
 const progressSeconds = ref<Record<number, number>>({})
 const activeTodo = ref<Todo | null>(null)
 const secondsLeft = ref(30 * 60)
@@ -111,12 +115,25 @@ function playCompletionChime() {
 </script>
 
 <template>
-  <section class="hero">
-    <p class="eyebrow">{{ dateLabel }}</p>
-    <h1>Today’s tasks</h1>
-    <p class="lede">Stay on track with your daily routine.</p>
+  <div class="dashboard-view">
+  <section class="hero dashboard-hero">
+    <div>
+      <p class="eyebrow">{{ dateLabel }}</p>
+      <h1>Today’s tasks</h1>
+      <p class="lede">Stay on track with your daily routine.</p>
+    </div>
+    <div
+      class="overall-progress"
+      role="img"
+      :aria-label="`${overallProgress}% overall progress across ${todaysTodos.length} tasks`"
+    >
+      <div class="progress-pie" :style="{ '--overall-progress': overallProgress + '%' }">
+        <strong>{{ overallProgress }}%</strong>
+      </div>
+      <span>Overall progress</span>
+    </div>
   </section>
-  <section class="card" aria-live="polite">
+  <section class="card focus-card" aria-live="polite">
     <div class="card-head"><div><p class="eyebrow">Today’s focus</p><h2>{{ todaysTodos.length }} {{ todaysTodos.length === 1 ? 'task' : 'tasks' }}</h2></div><span class="list-readonly">Select a task to begin</span></div>
     <p v-if="saveError" class="save-error" role="alert">Progress isn’t saving: {{ saveError }}</p>
     <p v-if="loading" class="state">Gathering your day…</p>
@@ -154,4 +171,5 @@ function playCompletionChime() {
       </section>
     </div>
   </Teleport>
+  </div>
 </template>
