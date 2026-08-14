@@ -1,5 +1,5 @@
 import { onMounted, ref } from 'vue';
-import { api, dayNames } from '../types';
+import { api, dayNames, isoDate } from '../types';
 const todos = ref([]);
 const title = ref('');
 const duration = ref(30);
@@ -10,6 +10,9 @@ const editingId = ref(null);
 const editingTitle = ref('');
 const editSaving = ref(false);
 const showAdd = ref(false);
+const showClearConfirmation = ref(false);
+const clearingProgress = ref(false);
+const clearMessage = ref('');
 async function load() { try {
     const rows = await api();
     todos.value = rows.map(t => ({ ...t, days: JSON.parse(t.days) }));
@@ -53,6 +56,22 @@ async function saveEdit(todo) {
     }
     finally {
         editSaving.value = false;
+    }
+}
+async function clearTodaysProgress() {
+    clearingProgress.value = true;
+    error.value = '';
+    clearMessage.value = '';
+    try {
+        await api('PATCH', { clear_progress_on: isoDate() });
+        showClearConfirmation.value = false;
+        clearMessage.value = "Today's progress has been cleared.";
+    }
+    catch (e) {
+        error.value = e instanceof Error ? e.message : "Could not clear today's progress";
+    }
+    finally {
+        clearingProgress.value = false;
     }
 }
 const __VLS_ctx = {
@@ -197,6 +216,43 @@ else {
         [];
     }
 }
+__VLS_asFunctionalElement1(__VLS_intrinsics.section, __VLS_intrinsics.section)({
+    ...{ class: "card progress-settings-card" },
+});
+/** @type {__VLS_StyleScopedClasses['card']} */ ;
+/** @type {__VLS_StyleScopedClasses['progress-settings-card']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({});
+__VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
+    ...{ class: "eyebrow" },
+});
+/** @type {__VLS_StyleScopedClasses['eyebrow']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.h2, __VLS_intrinsics.h2)({});
+__VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({});
+__VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+    ...{ onClick: (...[$event]) => {
+            return (__VLS_ctx.showClearConfirmation = true);
+            // @ts-ignore
+            [showClearConfirmation,];
+        } },
+    ...{ class: "clear-progress-trigger" },
+});
+/** @type {__VLS_StyleScopedClasses['clear-progress-trigger']} */ ;
+if (__VLS_ctx.clearMessage) {
+    __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
+        ...{ class: "clear-success" },
+        role: "status",
+    });
+    /** @type {__VLS_StyleScopedClasses['clear-success']} */ ;
+    (__VLS_ctx.clearMessage);
+}
+if (__VLS_ctx.error) {
+    __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
+        ...{ class: "inline-error" },
+        role: "alert",
+    });
+    /** @type {__VLS_StyleScopedClasses['inline-error']} */ ;
+    (__VLS_ctx.error);
+}
 let __VLS_0;
 /** @ts-ignore @type { | typeof __VLS_components.Teleport | typeof __VLS_components.Teleport} */
 Teleport;
@@ -215,7 +271,7 @@ if (__VLS_ctx.showAdd) {
                     throw 0;
                 return (__VLS_ctx.showAdd = false);
                 // @ts-ignore
-                [showAdd, showAdd,];
+                [showAdd, showAdd, clearMessage, clearMessage, error, error,];
             } },
         ...{ class: "modal-backdrop" },
         role: "presentation",
@@ -320,8 +376,79 @@ if (__VLS_ctx.showAdd) {
     __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
 }
 // @ts-ignore
-[title, duration, days, error, error, saving, saving,];
+[error, error, title, duration, days, saving, saving,];
 var __VLS_3;
+let __VLS_6;
+/** @ts-ignore @type { | typeof __VLS_components.Teleport | typeof __VLS_components.Teleport} */
+Teleport;
+// @ts-ignore
+const __VLS_7 = __VLS_asFunctionalComponent1(__VLS_6, new __VLS_6({
+    to: "body",
+}));
+const __VLS_8 = __VLS_7({
+    to: "body",
+}, ...__VLS_functionalComponentArgsRest(__VLS_7));
+const { default: __VLS_11 } = __VLS_9.slots;
+if (__VLS_ctx.showClearConfirmation) {
+    __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.showClearConfirmation))
+                    throw 0;
+                return (__VLS_ctx.showClearConfirmation = false);
+                // @ts-ignore
+                [showClearConfirmation, showClearConfirmation,];
+            } },
+        ...{ class: "modal-backdrop" },
+        role: "presentation",
+    });
+    /** @type {__VLS_StyleScopedClasses['modal-backdrop']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.section, __VLS_intrinsics.section)({
+        ...{ onClick: () => { } },
+        ...{ class: "timer-modal confirm-modal" },
+        role: "alertdialog",
+        'aria-modal': "true",
+        'aria-labelledby': "clear-progress-title",
+        'aria-describedby': "clear-progress-description",
+    });
+    /** @type {__VLS_StyleScopedClasses['timer-modal']} */ ;
+    /** @type {__VLS_StyleScopedClasses['confirm-modal']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
+        ...{ class: "eyebrow" },
+    });
+    /** @type {__VLS_StyleScopedClasses['eyebrow']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.h2, __VLS_intrinsics.h2)({
+        id: "clear-progress-title",
+    });
+    __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
+        id: "clear-progress-description",
+    });
+    __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+        ...{ class: "confirm-actions" },
+    });
+    /** @type {__VLS_StyleScopedClasses['confirm-actions']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.showClearConfirmation))
+                    throw 0;
+                return (__VLS_ctx.showClearConfirmation = false);
+                // @ts-ignore
+                [showClearConfirmation,];
+            } },
+        ...{ class: "edit-cancel" },
+        disabled: (__VLS_ctx.clearingProgress),
+    });
+    /** @type {__VLS_StyleScopedClasses['edit-cancel']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (__VLS_ctx.clearTodaysProgress) },
+        ...{ class: "confirm-clear" },
+        disabled: (__VLS_ctx.clearingProgress),
+    });
+    /** @type {__VLS_StyleScopedClasses['confirm-clear']} */ ;
+    (__VLS_ctx.clearingProgress ? 'Clearing…' : 'Yes, clear progress');
+}
+// @ts-ignore
+[clearingProgress, clearingProgress, clearingProgress, clearTodaysProgress,];
+var __VLS_9;
 // @ts-ignore
 [];
 const __VLS_export = (await import('vue')).defineComponent({});

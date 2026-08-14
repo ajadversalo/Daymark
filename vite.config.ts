@@ -35,6 +35,15 @@ function tursoApi(): Plugin {
             res.statusCode = 201; res.end(JSON.stringify({ id: Number(result.lastInsertRowid), ...body, duration_minutes: duration })); return
           }
           if (req.method === 'PATCH') {
+            if (body.clear_progress_on !== undefined) {
+              const date = String(body.clear_progress_on)
+              if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { res.statusCode = 400; res.end(JSON.stringify({ error: 'A valid date is required.' })); return }
+              await client.batch([
+                { sql: 'DELETE FROM focus_progress WHERE progress_on=?', args: [date] },
+                { sql: 'DELETE FROM completions WHERE completed_on=?', args: [date] },
+              ])
+              res.end(JSON.stringify({ ok: true })); return
+            }
             if (body.title !== undefined) await client.execute({ sql: 'UPDATE todos SET title=? WHERE id=?', args: [String(body.title).trim().slice(0, 100), body.id] })
             if (body.elapsed_seconds !== undefined) await client.execute({ sql: 'INSERT INTO focus_progress(todo_id, progress_on, elapsed_seconds) VALUES (?, ?, ?) ON CONFLICT(todo_id, progress_on) DO UPDATE SET elapsed_seconds=excluded.elapsed_seconds', args: [body.id, body.date, Math.max(0, Number(body.elapsed_seconds) || 0)] })
             if (body.completed !== undefined) {

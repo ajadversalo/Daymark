@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { api, dayNames, type Todo } from '../types'
+import { api, dayNames, isoDate, type Todo } from '../types'
 const todos = ref<Todo[]>([]); const title = ref(''); const duration = ref(30); const days = ref<number[]>([1,2,3,4,5]); const error = ref(''); const saving = ref(false)
 const editingId = ref<number | null>(null); const editingTitle = ref(''); const editSaving = ref(false)
 const showAdd = ref(false)
+const showClearConfirmation = ref(false); const clearingProgress = ref(false); const clearMessage = ref('')
 async function load() { try { const rows = await api<any[]>(); todos.value = rows.map(t => ({ ...t, days: JSON.parse(t.days) })) } catch(e) { error.value = e instanceof Error ? e.message : 'Could not load todos' } }
 onMounted(load)
 function dayToggle(day: number) { days.value = days.value.includes(day) ? days.value.filter(d => d !== day) : [...days.value, day].sort() }
@@ -18,6 +19,12 @@ async function saveEdit(todo: Todo) {
   try { await api('PATCH', { id: todo.id, title: nextTitle }); todo.title = nextTitle; cancelEdit() }
   catch(e) { error.value = e instanceof Error ? e.message : 'Could not update the item' }
   finally { editSaving.value = false }
+}
+async function clearTodaysProgress() {
+  clearingProgress.value = true; error.value = ''; clearMessage.value = ''
+  try { await api('PATCH', { clear_progress_on: isoDate() }); showClearConfirmation.value = false; clearMessage.value = "Today's progress has been cleared." }
+  catch(e) { error.value = e instanceof Error ? e.message : "Could not clear today's progress" }
+  finally { clearingProgress.value = false }
 }
 </script>
 
@@ -34,6 +41,12 @@ async function saveEdit(todo: Todo) {
         <template v-else><div><strong>{{ todo.title }}</strong><p>{{ todo.days.map(d => dayNames[d]).join(' · ') }} · {{ (todo.duration_minutes ?? 30) === 0 ? 'Untimed' : `${todo.duration_minutes ?? 30} min` }}</p></div><div class="item-actions"><button class="edit" @click="beginEdit(todo)">Edit</button><button class="delete" @click="remove(todo)" :aria-label="`Delete ${todo.title}`">×</button></div></template>
       </li></ul>
     </section>
+    <section class="card progress-settings-card">
+      <div><p class="eyebrow">Daily progress</p><h2>Start today fresh</h2><p>Reset every task’s timer and completion status for today. Your routine and progress from other days won’t be changed.</p></div>
+      <button class="clear-progress-trigger" @click="showClearConfirmation = true">Clear today’s progress</button>
+      <p v-if="clearMessage" class="clear-success" role="status">{{ clearMessage }}</p>
+      <p v-if="error" class="inline-error" role="alert">{{ error }}</p>
+    </section>
   </div>
   <Teleport to="body">
     <div v-if="showAdd" class="modal-backdrop" role="presentation" @click="showAdd = false">
@@ -46,6 +59,19 @@ async function saveEdit(todo: Todo) {
         <p v-if="error" class="inline-error">{{ error }}</p>
         <button class="primary" :disabled="saving || !title.trim() || !days.length || duration < 0">{{ saving ? 'Adding…' : 'Add item' }} <span>＋</span></button>
       </form>
+    </div>
+  </Teleport>
+  <Teleport to="body">
+    <div v-if="showClearConfirmation" class="modal-backdrop" role="presentation" @click="showClearConfirmation = false">
+      <section class="timer-modal confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="clear-progress-title" aria-describedby="clear-progress-description" @click.stop>
+        <p class="eyebrow">Please confirm</p>
+        <h2 id="clear-progress-title">Clear today’s progress?</h2>
+        <p id="clear-progress-description">All timer progress and completed checkmarks for today will be reset. This can’t be undone.</p>
+        <div class="confirm-actions">
+          <button class="edit-cancel" :disabled="clearingProgress" @click="showClearConfirmation = false">Cancel</button>
+          <button class="confirm-clear" :disabled="clearingProgress" @click="clearTodaysProgress">{{ clearingProgress ? 'Clearing…' : 'Yes, clear progress' }}</button>
+        </div>
+      </section>
     </div>
   </Teleport>
 </template>

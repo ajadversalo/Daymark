@@ -36,6 +36,15 @@ export default async function handler(request: Request) {
       return Response.json({ id: Number(result.lastInsertRowid), title: body.title, days: body.days, duration_minutes: duration }, { status: 201 })
     }
     if (request.method === 'PATCH') {
+      if (body.clear_progress_on !== undefined) {
+        const date = String(body.clear_progress_on)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return Response.json({ error: 'A valid date is required.' }, { status: 400 })
+        await client.batch([
+          { sql: 'DELETE FROM focus_progress WHERE progress_on=?', args: [date] },
+          { sql: 'DELETE FROM completions WHERE completed_on=?', args: [date] },
+        ])
+        return Response.json({ ok: true })
+      }
       if (body.title !== undefined) await client.execute({ sql: 'UPDATE todos SET title=? WHERE id=?', args: [String(body.title).trim().slice(0, 100), body.id] })
       if (body.elapsed_seconds !== undefined) await client.execute({ sql: 'INSERT INTO focus_progress(todo_id, progress_on, elapsed_seconds) VALUES (?, ?, ?) ON CONFLICT(todo_id, progress_on) DO UPDATE SET elapsed_seconds=excluded.elapsed_seconds', args: [body.id, body.date, Math.max(0, Number(body.elapsed_seconds) || 0)] })
       if (body.completed !== undefined) await client.execute(body.completed

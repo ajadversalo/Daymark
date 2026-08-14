@@ -25,6 +25,7 @@ nav a.router-link-active{color:#123b61;background:var(--yellow)}
 .timer-toggle.paused,.untimed-toggle.undo{background:var(--green);color:#fff}
 .edit-save{background:var(--yellow);color:#123b61}
 .settings-hero{display:flex;max-width:none;align-items:flex-end;justify-content:space-between}.add-trigger{display:grid;place-items:center;width:48px;height:48px;margin-bottom:2px;border:0;border-radius:12px;background:var(--yellow);color:#123b61;font-size:30px;font-weight:500;line-height:1;cursor:pointer;box-shadow:0 4px 0 #d9a900}.add-trigger:active{transform:translateY(2px);box-shadow:0 2px 0 #d9a900}.settings-grid{grid-template-columns:1fr}.add-modal{position:relative;width:min(440px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:30px;text-align:left}.add-modal h2{margin-bottom:25px}.add-modal .modal-close{top:14px;right:14px}
+.progress-settings-card{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:26px}.progress-settings-card h2{margin-bottom:7px}.progress-settings-card p{max-width:610px;margin:0;color:var(--muted);font-size:13px;line-height:1.55}.clear-progress-trigger,.confirm-clear{flex:none;border:1px solid #fda29b;border-radius:8px;background:#fff;color:#b42318;padding:11px 14px;font-size:13px;font-weight:600;cursor:pointer}.clear-progress-trigger:hover,.confirm-clear:hover{background:#fef3f2}.clear-success{color:#32815a!important;font-weight:600}.confirm-modal{text-align:left}.confirm-modal>p:not(.eyebrow){margin:12px 0 24px;color:var(--muted);font-size:14px;line-height:1.55}.confirm-actions{display:flex;justify-content:flex-end;gap:9px}.confirm-actions button{padding:10px 14px}.confirm-actions button:disabled{opacity:.5;cursor:not-allowed}
 .theme-toggle{display:grid;place-items:center;width:38px;height:38px;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:20px;line-height:1;cursor:pointer}.theme-toggle:hover{background:#dce9f7;color:var(--green)}.theme-toggle:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 
 [data-theme="dark"]{color-scheme:dark;--ink:#edf6ff;--muted:#9bb0c5;--green:#55ace8;--yellow:#ffd43b;--line:#28435b;--paper:#102b40;background:#071c2e}
@@ -47,4 +48,6 @@ nav a.router-link-active{color:#123b61;background:var(--yellow)}
 [data-theme="dark"] .untimed-state{background:#0b2235}
 [data-theme="dark"] .untimed-state>span{background:#173b55;color:var(--yellow)}
 [data-theme="dark"] .edit-cancel{background:#0b2235;border-color:#36536c;color:#b7c8d7}
+[data-theme="dark"] .clear-progress-trigger,[data-theme="dark"] .confirm-clear{background:#0b2235;border-color:#b5473e;color:#fda29b}
 [data-theme="dark"] footer span:first-child{color:#b7c8d7}
+@media(max-width:700px){.progress-settings-card{align-items:stretch;flex-direction:column}.clear-progress-trigger{width:100%}}
