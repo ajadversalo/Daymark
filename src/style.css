@@ -61,5 +61,7 @@ nav a.router-link-active{color:#123b61;background:var(--yellow)}
 [data-theme="dark"] .clear-progress-trigger,[data-theme="dark"] .confirm-clear{background:#0b2235;border-color:#b5473e;color:#fda29b}
 [data-theme="dark"] .inline-error,[data-theme="dark"] .error{color:#ffaaa4}
 [data-theme="dark"] .clear-success{color:#78d7a7!important}
-footer{justify-content:flex-end}
+.focus-card{flex:0 1 auto}
+footer{justify-content:flex-start}
+footer .settings-link{margin-right:auto}
 @media(max-width:700px){.progress-settings-card{align-items:stretch;flex-direction:column}.clear-progress-trigger{width:100%}}
