@@ -1,10 +1,11 @@
 import { onMounted, ref } from 'vue';
-import { api, dayNames } from '../types';
+import { api, dayNames, isoDate } from '../types';
 const todos = ref([]);
 const title = ref('');
 const groupName = ref('');
 const duration = ref(30);
 const days = ref([1, 2, 3, 4, 5]);
+const scheduleType = ref('recurring');
 const error = ref('');
 const saving = ref(false);
 const editingId = ref(null);
@@ -12,6 +13,9 @@ const editingTitle = ref('');
 const editingGroup = ref('');
 const editSaving = ref(false);
 const showAdd = ref(false);
+const showClearConfirmation = ref(false);
+const clearingProgress = ref(false);
+const clearMessage = ref('');
 async function load() { try {
     const rows = await api();
     todos.value = rows.map(t => ({ ...t, days: JSON.parse(t.days) }));
@@ -21,14 +25,15 @@ catch (e) {
 } }
 onMounted(load);
 function dayToggle(day) { days.value = days.value.includes(day) ? days.value.filter(d => d !== day) : [...days.value, day].sort(); }
-async function add() { if (!title.value.trim() || !days.value.length || duration.value < 0)
+async function add() { if (!title.value.trim() || (scheduleType.value === 'recurring' && !days.value.length) || duration.value < 0)
     return; saving.value = true; error.value = ''; try {
-    const item = await api('POST', { title: title.value.trim(), group_name: groupName.value.trim() || null, days: days.value, duration_minutes: duration.value });
+    const item = await api('POST', { title: title.value.trim(), group_name: groupName.value.trim() || null, days: scheduleType.value === 'once' ? [] : days.value, one_time: scheduleType.value === 'once', duration_minutes: duration.value });
     todos.value.push({ ...item, completed: false });
     title.value = '';
     groupName.value = '';
     duration.value = 30;
     days.value = [1, 2, 3, 4, 5];
+    scheduleType.value = 'recurring';
     showAdd.value = false;
 }
 catch (e) {
@@ -58,6 +63,22 @@ async function saveEdit(todo) {
     }
     finally {
         editSaving.value = false;
+    }
+}
+async function clearTodaysProgress() {
+    clearingProgress.value = true;
+    error.value = '';
+    clearMessage.value = '';
+    try {
+        await api('PATCH', { clear_progress_on: isoDate() });
+        showClearConfirmation.value = false;
+        clearMessage.value = "Today's progress has been cleared.";
+    }
+    catch (e) {
+        error.value = e instanceof Error ? e.message : "Could not clear today's progress";
+    }
+    finally {
+        clearingProgress.value = false;
     }
 }
 const __VLS_ctx = {
@@ -181,7 +202,7 @@ else {
                 /** @type {__VLS_StyleScopedClasses['group-tag']} */ ;
                 (todo.group_name);
             }
-            (todo.days.map(d => __VLS_ctx.dayNames[d]).join(' · '));
+            (todo.one_time ? `One time${todo.completed ? ' · Done' : ''}` : todo.days.map(d => __VLS_ctx.dayNames[d]).join(' · '));
             ((todo.duration_minutes ?? 30) === 0 ? 'Untimed' : `${todo.duration_minutes ?? 30} min`);
             __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
                 ...{ class: "item-actions" },
@@ -219,6 +240,43 @@ else {
         [];
     }
 }
+__VLS_asFunctionalElement1(__VLS_intrinsics.section, __VLS_intrinsics.section)({
+    ...{ class: "card progress-settings-card" },
+});
+/** @type {__VLS_StyleScopedClasses['card']} */ ;
+/** @type {__VLS_StyleScopedClasses['progress-settings-card']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({});
+__VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
+    ...{ class: "eyebrow" },
+});
+/** @type {__VLS_StyleScopedClasses['eyebrow']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.h2, __VLS_intrinsics.h2)({});
+__VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({});
+__VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+    ...{ onClick: (...[$event]) => {
+            return (__VLS_ctx.showClearConfirmation = true);
+            // @ts-ignore
+            [showClearConfirmation,];
+        } },
+    ...{ class: "clear-progress-trigger" },
+});
+/** @type {__VLS_StyleScopedClasses['clear-progress-trigger']} */ ;
+if (__VLS_ctx.clearMessage) {
+    __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
+        ...{ class: "clear-success" },
+        role: "status",
+    });
+    /** @type {__VLS_StyleScopedClasses['clear-success']} */ ;
+    (__VLS_ctx.clearMessage);
+}
+if (__VLS_ctx.error) {
+    __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
+        ...{ class: "inline-error" },
+        role: "alert",
+    });
+    /** @type {__VLS_StyleScopedClasses['inline-error']} */ ;
+    (__VLS_ctx.error);
+}
 let __VLS_0;
 /** @ts-ignore @type { | typeof __VLS_components.Teleport | typeof __VLS_components.Teleport} */
 Teleport;
@@ -237,7 +295,7 @@ if (__VLS_ctx.showAdd) {
                     throw 0;
                 return (__VLS_ctx.showAdd = false);
                 // @ts-ignore
-                [showAdd, showAdd,];
+                [showAdd, showAdd, clearMessage, clearMessage, error, error,];
             } },
         ...{ class: "modal-backdrop" },
         role: "presentation",
@@ -322,27 +380,69 @@ if (__VLS_ctx.showAdd) {
     __VLS_asFunctionalElement1(__VLS_intrinsics.fieldset, __VLS_intrinsics.fieldset)({});
     __VLS_asFunctionalElement1(__VLS_intrinsics.legend, __VLS_intrinsics.legend)({});
     __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
-        ...{ class: "day-picker" },
+        ...{ class: "schedule-picker" },
     });
-    /** @type {__VLS_StyleScopedClasses['day-picker']} */ ;
-    for (const [day, i] of __VLS_vFor((__VLS_ctx.dayNames))) {
-        __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
-            ...{ onClick: (...[$event]) => {
-                    if (!(__VLS_ctx.showAdd))
-                        throw 0;
-                    return (__VLS_ctx.dayToggle(i));
-                    // @ts-ignore
-                    [dayNames, title, groupName, duration, dayToggle,];
-                } },
-            key: (day),
-            type: "button",
-            ...{ class: ({ active: __VLS_ctx.days.includes(i) }) },
-            'aria-pressed': (__VLS_ctx.days.includes(i)),
+    /** @type {__VLS_StyleScopedClasses['schedule-picker']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.showAdd))
+                    throw 0;
+                return (__VLS_ctx.scheduleType = 'recurring');
+                // @ts-ignore
+                [title, groupName, duration, scheduleType,];
+            } },
+        type: "button",
+        ...{ class: ({ active: __VLS_ctx.scheduleType === 'recurring' }) },
+        'aria-pressed': (__VLS_ctx.scheduleType === 'recurring'),
+    });
+    /** @type {__VLS_StyleScopedClasses['active']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.showAdd))
+                    throw 0;
+                return (__VLS_ctx.scheduleType = 'once');
+                // @ts-ignore
+                [scheduleType, scheduleType, scheduleType,];
+            } },
+        type: "button",
+        ...{ class: ({ active: __VLS_ctx.scheduleType === 'once' }) },
+        'aria-pressed': (__VLS_ctx.scheduleType === 'once'),
+    });
+    /** @type {__VLS_StyleScopedClasses['active']} */ ;
+    if (__VLS_ctx.scheduleType === 'once') {
+        __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+            ...{ class: "field-help" },
         });
-        /** @type {__VLS_StyleScopedClasses['active']} */ ;
-        (day.slice(0, 1));
-        // @ts-ignore
-        [days, days,];
+        /** @type {__VLS_StyleScopedClasses['field-help']} */ ;
+    }
+    if (__VLS_ctx.scheduleType === 'recurring') {
+        __VLS_asFunctionalElement1(__VLS_intrinsics.fieldset, __VLS_intrinsics.fieldset)({});
+        __VLS_asFunctionalElement1(__VLS_intrinsics.legend, __VLS_intrinsics.legend)({});
+        __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+            ...{ class: "day-picker" },
+        });
+        /** @type {__VLS_StyleScopedClasses['day-picker']} */ ;
+        for (const [day, i] of __VLS_vFor((__VLS_ctx.dayNames))) {
+            __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.showAdd))
+                            throw 0;
+                        if (!(__VLS_ctx.scheduleType === 'recurring'))
+                            throw 0;
+                        return (__VLS_ctx.dayToggle(i));
+                        // @ts-ignore
+                        [dayNames, scheduleType, scheduleType, scheduleType, scheduleType, dayToggle,];
+                    } },
+                key: (day),
+                type: "button",
+                ...{ class: ({ active: __VLS_ctx.days.includes(i) }) },
+                'aria-pressed': (__VLS_ctx.days.includes(i)),
+            });
+            /** @type {__VLS_StyleScopedClasses['active']} */ ;
+            (day.slice(0, 1));
+            // @ts-ignore
+            [days, days,];
+        }
     }
     if (__VLS_ctx.error) {
         __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
@@ -353,15 +453,86 @@ if (__VLS_ctx.showAdd) {
     }
     __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
         ...{ class: "primary" },
-        disabled: (__VLS_ctx.saving || !__VLS_ctx.title.trim() || !__VLS_ctx.days.length || __VLS_ctx.duration < 0),
+        disabled: (__VLS_ctx.saving || !__VLS_ctx.title.trim() || (__VLS_ctx.scheduleType === 'recurring' && !__VLS_ctx.days.length) || __VLS_ctx.duration < 0),
     });
     /** @type {__VLS_StyleScopedClasses['primary']} */ ;
     (__VLS_ctx.saving ? 'Adding…' : 'Add item');
     __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
 }
 // @ts-ignore
-[title, duration, days, error, error, saving, saving,];
+[error, error, title, duration, scheduleType, days, saving, saving,];
 var __VLS_3;
+let __VLS_6;
+/** @ts-ignore @type { | typeof __VLS_components.Teleport | typeof __VLS_components.Teleport} */
+Teleport;
+// @ts-ignore
+const __VLS_7 = __VLS_asFunctionalComponent1(__VLS_6, new __VLS_6({
+    to: "body",
+}));
+const __VLS_8 = __VLS_7({
+    to: "body",
+}, ...__VLS_functionalComponentArgsRest(__VLS_7));
+const { default: __VLS_11 } = __VLS_9.slots;
+if (__VLS_ctx.showClearConfirmation) {
+    __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.showClearConfirmation))
+                    throw 0;
+                return (__VLS_ctx.showClearConfirmation = false);
+                // @ts-ignore
+                [showClearConfirmation, showClearConfirmation,];
+            } },
+        ...{ class: "modal-backdrop" },
+        role: "presentation",
+    });
+    /** @type {__VLS_StyleScopedClasses['modal-backdrop']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.section, __VLS_intrinsics.section)({
+        ...{ onClick: () => { } },
+        ...{ class: "timer-modal confirm-modal" },
+        role: "alertdialog",
+        'aria-modal': "true",
+        'aria-labelledby': "clear-progress-title",
+        'aria-describedby': "clear-progress-description",
+    });
+    /** @type {__VLS_StyleScopedClasses['timer-modal']} */ ;
+    /** @type {__VLS_StyleScopedClasses['confirm-modal']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
+        ...{ class: "eyebrow" },
+    });
+    /** @type {__VLS_StyleScopedClasses['eyebrow']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.h2, __VLS_intrinsics.h2)({
+        id: "clear-progress-title",
+    });
+    __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
+        id: "clear-progress-description",
+    });
+    __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+        ...{ class: "confirm-actions" },
+    });
+    /** @type {__VLS_StyleScopedClasses['confirm-actions']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.showClearConfirmation))
+                    throw 0;
+                return (__VLS_ctx.showClearConfirmation = false);
+                // @ts-ignore
+                [showClearConfirmation,];
+            } },
+        ...{ class: "edit-cancel" },
+        disabled: (__VLS_ctx.clearingProgress),
+    });
+    /** @type {__VLS_StyleScopedClasses['edit-cancel']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (__VLS_ctx.clearTodaysProgress) },
+        ...{ class: "confirm-clear" },
+        disabled: (__VLS_ctx.clearingProgress),
+    });
+    /** @type {__VLS_StyleScopedClasses['confirm-clear']} */ ;
+    (__VLS_ctx.clearingProgress ? 'Clearing…' : 'Yes, clear progress');
+}
+// @ts-ignore
+[clearingProgress, clearingProgress, clearingProgress, clearTodaysProgress,];
+var __VLS_9;
 // @ts-ignore
 [];
 const __VLS_export = (await import('vue')).defineComponent({});

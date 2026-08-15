@@ -2,10 +2,25 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { api, isoDate, type Todo } from '../types'
 
-const todos = ref<Todo[]>([]); const loading = ref(true); const error = ref(''); const saveError = ref('')
-const today = new Date(); const todayIndex = today.getDay()
-const dateLabel = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-const todaysTodos = computed(() => todos.value.filter(t => t.days.includes(todayIndex)))
+const today = ref(new Date())
+const todayKey = computed(() => isoDate(today.value))
+const cacheKey = (date: string) => `daymark-todos-${date}`
+function readCachedTodos(date: string): Todo[] | null {
+  try {
+    const cached = localStorage.getItem(cacheKey(date))
+    return cached ? JSON.parse(cached) as Todo[] : null
+  } catch { return null }
+}
+function cacheTodos() {
+  try { localStorage.setItem(cacheKey(todayKey.value), JSON.stringify(todos.value)) } catch { /* Storage may be unavailable. */ }
+}
+const initialCache = readCachedTodos(todayKey.value)
+const todos = ref<Todo[]>(initialCache ?? []); const loading = ref(initialCache === null); const error = ref(''); const saveError = ref('')
+const compactList = ref(localStorage.getItem('daymark-compact-list') === 'true')
+function toggleCompactList() { compactList.value = !compactList.value; localStorage.setItem('daymark-compact-list', String(compactList.value)) }
+const todayIndex = computed(() => today.value.getDay())
+const dateLabel = computed(() => today.value.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }))
+const todaysTodos = computed(() => todos.value.filter(t => t.one_time ? !t.completed : t.days.includes(todayIndex.value)))
 type DisplayItem = { key: string; title: string; todos: Todo[] }
 const displayItems = computed<DisplayItem[]>(() => {
   const entries: DisplayItem[] = []; const groups = new Map<string, DisplayItem>()
@@ -23,12 +38,13 @@ const overallProgress = computed(() => {
   if (!todaysTodos.value.length) return 0
   return Math.round(todaysTodos.value.reduce((total, todo) => total + taskPercentage(todo), 0) / todaysTodos.value.length)
 })
-const progressSeconds = ref<Record<number, number>>({})
+const progressSeconds = ref<Record<number, number>>(Object.fromEntries((initialCache ?? []).map(todo => [todo.id, Number(todo.elapsed_seconds) || 0])))
 const activeTodo = ref<Todo | null>(null)
 const secondsLeft = ref(30 * 60)
 const timerDuration = ref(30 * 60)
 const running = ref(false)
 let timer: ReturnType<typeof setInterval> | undefined
+let midnightTimer: ReturnType<typeof setTimeout> | undefined
 let audioContext: AudioContext | undefined
 const timerText = computed(() => `${String(Math.floor(secondsLeft.value / 60)).padStart(2, '0')}:${String(secondsLeft.value % 60).padStart(2, '0')}`)
 const timerProgress = computed(() => ((timerDuration.value - secondsLeft.value) / timerDuration.value) * 100)
@@ -44,9 +60,31 @@ function taskTimeLabel(todo: Todo) {
   const format = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
   return `${format(elapsed)} of ${format(total)}`
 }
-onMounted(async () => { try { const rows = await api<any[]>(); todos.value = rows.map(t => ({ ...t, days: JSON.parse(t.days), elapsed_seconds: Number(t.elapsed_seconds) || 0 })); progressSeconds.value = Object.fromEntries(todos.value.map(todo => [todo.id, todo.elapsed_seconds])) } catch(e) { error.value = e instanceof Error ? e.message : 'Could not load todos' } finally { loading.value = false } })
-onMounted(() => window.addEventListener('keydown', onKeydown))
-onBeforeUnmount(() => { saveActiveProgress(); stopTimer(); window.removeEventListener('keydown', onKeydown) })
+async function loadTodos() {
+  const cached = readCachedTodos(todayKey.value)
+  if (cached) {
+    todos.value = cached
+    progressSeconds.value = Object.fromEntries(cached.map(todo => [todo.id, Number(todo.elapsed_seconds) || 0]))
+  }
+  loading.value = cached === null
+  try { const rows = await api<any[]>(); todos.value = rows.map(t => ({ ...t, days: Array.isArray(t.days) ? t.days : JSON.parse(t.days), elapsed_seconds: Number(t.elapsed_seconds) || 0 })); progressSeconds.value = Object.fromEntries(todos.value.map(todo => [todo.id, todo.elapsed_seconds])); cacheTodos(); error.value = '' }
+  catch(e) { if (cached === null) error.value = e instanceof Error ? e.message : 'Could not load todos' }
+  finally { loading.value = false }
+}
+function refreshLocalDate() {
+  const previousDate = todayKey.value
+  today.value = new Date()
+  if (todayKey.value !== previousDate) { todos.value = readCachedTodos(todayKey.value) ?? []; progressSeconds.value = Object.fromEntries(todos.value.map(todo => [todo.id, Number(todo.elapsed_seconds) || 0])); void loadTodos() }
+  scheduleLocalMidnight()
+}
+function scheduleLocalMidnight() {
+  if (midnightTimer) clearTimeout(midnightTimer)
+  const now = new Date()
+  const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+  midnightTimer = setTimeout(refreshLocalDate, nextMidnight.getTime() - now.getTime() + 1000)
+}
+onMounted(() => { void loadTodos(); scheduleLocalMidnight(); window.addEventListener('keydown', onKeydown); document.addEventListener('visibilitychange', refreshLocalDate) })
+onBeforeUnmount(() => { saveActiveProgress(); stopTimer(); if (midnightTimer) clearTimeout(midnightTimer); window.removeEventListener('keydown', onKeydown); document.removeEventListener('visibilitychange', refreshLocalDate) })
 function openTimer(todo: Todo) { saveActiveProgress(); stopTimer(); activeTodo.value = todo; timerDuration.value = (todo.duration_minutes ?? 30) * 60; secondsLeft.value = Math.max(0, timerDuration.value - (progressSeconds.value[todo.id] || 0)) }
 async function startTimer() {
   if (running.value || secondsLeft.value === 0) return
@@ -74,14 +112,14 @@ async function completeActiveTodo() {
   const todo = activeTodo.value
   if (!todo || todo.completed) return
   todo.completed = true
-  try { await api('PATCH', { id: todo.id, date: isoDate(), completed: true }) }
+  try { await api('PATCH', { id: todo.id, date: isoDate(), completed: true }); cacheTodos() }
   catch { todo.completed = false }
 }
 function saveActiveProgress() { if (activeTodo.value && timerDuration.value > 0) void persistProgress(activeTodo.value) }
 async function persistProgress(todo: Todo) {
   const elapsed = progressSeconds.value[todo.id] || 0
   todo.elapsed_seconds = elapsed
-  try { await api('PATCH', { id: todo.id, date: isoDate(), elapsed_seconds: elapsed }); saveError.value = '' }
+  try { await api('PATCH', { id: todo.id, date: isoDate(), elapsed_seconds: elapsed }); cacheTodos(); saveError.value = '' }
   catch (cause) { saveError.value = cause instanceof Error ? cause.message : 'Progress could not be saved' }
 }
 async function toggleUntimed() {
@@ -92,7 +130,11 @@ async function toggleUntimed() {
   const previous = Boolean(todo.completed)
   playButtonBeep(previous ? 390 : 660)
   todo.completed = !previous
-  try { await api('PATCH', { id: todo.id, date: isoDate(), completed: Boolean(todo.completed) }) }
+  try {
+    await api('PATCH', { id: todo.id, date: isoDate(), completed: Boolean(todo.completed) })
+    cacheTodos()
+    if (!previous) closeTimer()
+  }
   catch { todo.completed = previous }
 }
 async function toggleGroupedTodo(todo: Todo) {
@@ -151,8 +193,8 @@ function playCompletionChime() {
       <span>Overall progress</span>
     </div>
   </section>
-  <section class="card focus-card" aria-live="polite">
-    <div class="card-head"><div><p class="eyebrow">Today’s focus</p><h2>{{ todaysTodos.length }} {{ todaysTodos.length === 1 ? 'task' : 'tasks' }}</h2></div><span class="list-readonly">Select a task to begin</span></div>
+  <section class="card focus-card" :class="{ 'compact-list': compactList }" aria-live="polite">
+    <div class="card-head"><div><p class="eyebrow">Today’s focus</p><h2>{{ todaysTodos.length }} {{ todaysTodos.length === 1 ? 'task' : 'tasks' }}</h2></div><div class="list-head-actions"><span class="list-readonly">Select a task to begin</span><button v-if="todaysTodos.length" class="density-toggle" :aria-pressed="compactList" @click="toggleCompactList">{{ compactList ? 'Comfortable' : 'Condense' }}</button></div></div>
     <p v-if="saveError" class="save-error" role="alert">Progress isn’t saving: {{ saveError }}</p>
     <p v-if="loading" class="state">Gathering your day…</p>
     <div v-else-if="error" class="state error"><strong>We couldn’t reach your list.</strong><br>{{ error }}</div>
@@ -177,8 +219,6 @@ function playCompletionChime() {
       </li>
     </ul>
   </section>
-  <p class="dashboard-note">Need to change your routine? <RouterLink to="/settings">Manage it in Settings →</RouterLink></p>
-
   <Teleport to="body">
     <div v-if="activeTodo" class="modal-backdrop" role="presentation" @click="closeTimer">
       <section class="timer-modal" role="dialog" aria-modal="true" aria-labelledby="timer-title" @click.stop>

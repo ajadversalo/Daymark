@@ -1,13 +1,33 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { api, isoDate } from '../types';
-const todos = ref([]);
-const loading = ref(true);
+const today = ref(new Date());
+const todayKey = computed(() => isoDate(today.value));
+const cacheKey = (date) => `daymark-todos-${date}`;
+function readCachedTodos(date) {
+    try {
+        const cached = localStorage.getItem(cacheKey(date));
+        return cached ? JSON.parse(cached) : null;
+    }
+    catch {
+        return null;
+    }
+}
+function cacheTodos() {
+    try {
+        localStorage.setItem(cacheKey(todayKey.value), JSON.stringify(todos.value));
+    }
+    catch { /* Storage may be unavailable. */ }
+}
+const initialCache = readCachedTodos(todayKey.value);
+const todos = ref(initialCache ?? []);
+const loading = ref(initialCache === null);
 const error = ref('');
 const saveError = ref('');
-const today = new Date();
-const todayIndex = today.getDay();
-const dateLabel = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-const todaysTodos = computed(() => todos.value.filter(t => t.days.includes(todayIndex)));
+const compactList = ref(localStorage.getItem('daymark-compact-list') === 'true');
+function toggleCompactList() { compactList.value = !compactList.value; localStorage.setItem('daymark-compact-list', String(compactList.value)); }
+const todayIndex = computed(() => today.value.getDay());
+const dateLabel = computed(() => today.value.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }));
+const todaysTodos = computed(() => todos.value.filter(t => t.one_time ? !t.completed : t.days.includes(todayIndex.value)));
 const displayItems = computed(() => {
     const entries = [];
     const groups = new Map();
@@ -33,12 +53,13 @@ const overallProgress = computed(() => {
         return 0;
     return Math.round(todaysTodos.value.reduce((total, todo) => total + taskPercentage(todo), 0) / todaysTodos.value.length);
 });
-const progressSeconds = ref({});
+const progressSeconds = ref(Object.fromEntries((initialCache ?? []).map(todo => [todo.id, Number(todo.elapsed_seconds) || 0])));
 const activeTodo = ref(null);
 const secondsLeft = ref(30 * 60);
 const timerDuration = ref(30 * 60);
 const running = ref(false);
 let timer;
+let midnightTimer;
 let audioContext;
 const timerText = computed(() => `${String(Math.floor(secondsLeft.value / 60)).padStart(2, '0')}:${String(secondsLeft.value % 60).padStart(2, '0')}`);
 const timerProgress = computed(() => ((timerDuration.value - secondsLeft.value) / timerDuration.value) * 100);
@@ -56,19 +77,48 @@ function taskTimeLabel(todo) {
     const format = (seconds) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
     return `${format(elapsed)} of ${format(total)}`;
 }
-onMounted(async () => { try {
-    const rows = await api();
-    todos.value = rows.map(t => ({ ...t, days: JSON.parse(t.days), elapsed_seconds: Number(t.elapsed_seconds) || 0 }));
-    progressSeconds.value = Object.fromEntries(todos.value.map(todo => [todo.id, todo.elapsed_seconds]));
+async function loadTodos() {
+    const cached = readCachedTodos(todayKey.value);
+    if (cached) {
+        todos.value = cached;
+        progressSeconds.value = Object.fromEntries(cached.map(todo => [todo.id, Number(todo.elapsed_seconds) || 0]));
+    }
+    loading.value = cached === null;
+    try {
+        const rows = await api();
+        todos.value = rows.map(t => ({ ...t, days: Array.isArray(t.days) ? t.days : JSON.parse(t.days), elapsed_seconds: Number(t.elapsed_seconds) || 0 }));
+        progressSeconds.value = Object.fromEntries(todos.value.map(todo => [todo.id, todo.elapsed_seconds]));
+        cacheTodos();
+        error.value = '';
+    }
+    catch (e) {
+        if (cached === null)
+            error.value = e instanceof Error ? e.message : 'Could not load todos';
+    }
+    finally {
+        loading.value = false;
+    }
 }
-catch (e) {
-    error.value = e instanceof Error ? e.message : 'Could not load todos';
+function refreshLocalDate() {
+    const previousDate = todayKey.value;
+    today.value = new Date();
+    if (todayKey.value !== previousDate) {
+        todos.value = readCachedTodos(todayKey.value) ?? [];
+        progressSeconds.value = Object.fromEntries(todos.value.map(todo => [todo.id, Number(todo.elapsed_seconds) || 0]));
+        void loadTodos();
+    }
+    scheduleLocalMidnight();
 }
-finally {
-    loading.value = false;
-} });
-onMounted(() => window.addEventListener('keydown', onKeydown));
-onBeforeUnmount(() => { saveActiveProgress(); stopTimer(); window.removeEventListener('keydown', onKeydown); });
+function scheduleLocalMidnight() {
+    if (midnightTimer)
+        clearTimeout(midnightTimer);
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    midnightTimer = setTimeout(refreshLocalDate, nextMidnight.getTime() - now.getTime() + 1000);
+}
+onMounted(() => { void loadTodos(); scheduleLocalMidnight(); window.addEventListener('keydown', onKeydown); document.addEventListener('visibilitychange', refreshLocalDate); });
+onBeforeUnmount(() => { saveActiveProgress(); stopTimer(); if (midnightTimer)
+    clearTimeout(midnightTimer); window.removeEventListener('keydown', onKeydown); document.removeEventListener('visibilitychange', refreshLocalDate); });
 function openTimer(todo) { saveActiveProgress(); stopTimer(); activeTodo.value = todo; timerDuration.value = (todo.duration_minutes ?? 30) * 60; secondsLeft.value = Math.max(0, timerDuration.value - (progressSeconds.value[todo.id] || 0)); }
 async function startTimer() {
     if (running.value || secondsLeft.value === 0)
@@ -109,6 +159,7 @@ async function completeActiveTodo() {
     todo.completed = true;
     try {
         await api('PATCH', { id: todo.id, date: isoDate(), completed: true });
+        cacheTodos();
     }
     catch {
         todo.completed = false;
@@ -121,6 +172,7 @@ async function persistProgress(todo) {
     todo.elapsed_seconds = elapsed;
     try {
         await api('PATCH', { id: todo.id, date: isoDate(), elapsed_seconds: elapsed });
+        cacheTodos();
         saveError.value = '';
     }
     catch (cause) {
@@ -139,6 +191,9 @@ async function toggleUntimed() {
     todo.completed = !previous;
     try {
         await api('PATCH', { id: todo.id, date: isoDate(), completed: Boolean(todo.completed) });
+        cacheTodos();
+        if (!previous)
+            closeTimer();
     }
     catch {
         todo.completed = previous;
@@ -231,10 +286,12 @@ __VLS_asFunctionalElement1(__VLS_intrinsics.strong, __VLS_intrinsics.strong)({})
 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
 __VLS_asFunctionalElement1(__VLS_intrinsics.section, __VLS_intrinsics.section)({
     ...{ class: "card focus-card" },
+    ...{ class: ({ 'compact-list': __VLS_ctx.compactList }) },
     'aria-live': "polite",
 });
 /** @type {__VLS_StyleScopedClasses['card']} */ ;
 /** @type {__VLS_StyleScopedClasses['focus-card']} */ ;
+/** @type {__VLS_StyleScopedClasses['compact-list']} */ ;
 __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
     ...{ class: "card-head" },
 });
@@ -247,10 +304,23 @@ __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
 __VLS_asFunctionalElement1(__VLS_intrinsics.h2, __VLS_intrinsics.h2)({});
 (__VLS_ctx.todaysTodos.length);
 (__VLS_ctx.todaysTodos.length === 1 ? 'task' : 'tasks');
+__VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+    ...{ class: "list-head-actions" },
+});
+/** @type {__VLS_StyleScopedClasses['list-head-actions']} */ ;
 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
     ...{ class: "list-readonly" },
 });
 /** @type {__VLS_StyleScopedClasses['list-readonly']} */ ;
+if (__VLS_ctx.todaysTodos.length) {
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (__VLS_ctx.toggleCompactList) },
+        ...{ class: "density-toggle" },
+        'aria-pressed': (__VLS_ctx.compactList),
+    });
+    /** @type {__VLS_StyleScopedClasses['density-toggle']} */ ;
+    (__VLS_ctx.compactList ? 'Comfortable' : 'Condense');
+}
 if (__VLS_ctx.saveError) {
     __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
         ...{ class: "save-error" },
@@ -338,7 +408,7 @@ else {
                                 throw 0;
                             return (__VLS_ctx.toggleGroupedTodo(todo));
                             // @ts-ignore
-                            [dateLabel, overallProgress, overallProgress, overallProgress, todaysTodos, todaysTodos, todaysTodos, todaysTodos, saveError, saveError, loading, error, error, displayItems, toggleGroupedTodo,];
+                            [dateLabel, overallProgress, overallProgress, overallProgress, todaysTodos, todaysTodos, todaysTodos, todaysTodos, todaysTodos, compactList, compactList, compactList, toggleCompactList, saveError, saveError, loading, error, error, displayItems, toggleGroupedTodo,];
                         } },
                     type: "checkbox",
                     checked: (Boolean(todo.completed)),
@@ -408,35 +478,17 @@ else {
         [];
     }
 }
-__VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
-    ...{ class: "dashboard-note" },
-});
-/** @type {__VLS_StyleScopedClasses['dashboard-note']} */ ;
 let __VLS_0;
-/** @ts-ignore @type { | typeof __VLS_components.RouterLink | typeof __VLS_components.RouterLink} */
-RouterLink;
-// @ts-ignore
-const __VLS_1 = __VLS_asFunctionalComponent1(__VLS_0, new __VLS_0({
-    to: "/settings",
-}));
-const __VLS_2 = __VLS_1({
-    to: "/settings",
-}, ...__VLS_functionalComponentArgsRest(__VLS_1));
-const { default: __VLS_5 } = __VLS_3.slots;
-// @ts-ignore
-[];
-var __VLS_3;
-let __VLS_6;
 /** @ts-ignore @type { | typeof __VLS_components.Teleport | typeof __VLS_components.Teleport} */
 Teleport;
 // @ts-ignore
-const __VLS_7 = __VLS_asFunctionalComponent1(__VLS_6, new __VLS_6({
+const __VLS_1 = __VLS_asFunctionalComponent1(__VLS_0, new __VLS_0({
     to: "body",
 }));
-const __VLS_8 = __VLS_7({
+const __VLS_2 = __VLS_1({
     to: "body",
-}, ...__VLS_functionalComponentArgsRest(__VLS_7));
-const { default: __VLS_11 } = __VLS_9.slots;
+}, ...__VLS_functionalComponentArgsRest(__VLS_1));
+const { default: __VLS_5 } = __VLS_3.slots;
 if (__VLS_ctx.activeTodo) {
     __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
         ...{ onClick: (__VLS_ctx.closeTimer) },
@@ -532,7 +584,7 @@ if (__VLS_ctx.activeTodo) {
 }
 // @ts-ignore
 [activeTodo, activeTodo, activeTodo, timerDuration, timerDuration, secondsLeft, secondsLeft, running, running, toggleUntimed,];
-var __VLS_9;
+var __VLS_3;
 // @ts-ignore
 [];
 const __VLS_export = (await import('vue')).defineComponent({});

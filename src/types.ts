@@ -1,6 +1,11 @@
-export type Todo = { id: number; title: string; days: number[]; duration_minutes: number; elapsed_seconds: number; completed: number | boolean; group_name: string | null }
+export type Todo = { id: number; title: string; days: number[]; one_time?: number | boolean; duration_minutes: number; elapsed_seconds: number; completed: number | boolean; group_name: string | null }
 export const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-export const isoDate = () => new Date().toLocaleDateString('en-CA')
+export function isoDate(date = new Date()) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 export async function api<T>(method = 'GET', body?: unknown): Promise<T> {
   const url = method === 'GET' ? `/api/todos?date=${isoDate()}` : '/api/todos'
