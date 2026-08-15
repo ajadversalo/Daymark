@@ -53,6 +53,10 @@ function taskPercentage(todo: Todo) {
   const total = (todo.duration_minutes ?? 30) * 60
   return total ? Math.min(100, Number(((progressSeconds.value[todo.id] || 0) / total * 100).toFixed(1))) : 0
 }
+function groupPercentage(group: Todo[]) {
+  if (!group.length) return 0
+  return Math.round(group.reduce((total, todo) => total + taskPercentage(todo), 0) / group.length)
+}
 function taskTimeLabel(todo: Todo) {
   const total = (todo.duration_minutes ?? 30) * 60
   if (!total) return 'Untimed'
@@ -202,7 +206,8 @@ function playCompletionChime() {
     <ul v-else class="todo-list">
       <li v-for="item in displayItems" :key="item.key" :class="{ 'focus-complete': item.todos.length === 1 && item.todos[0].completed, 'task-group': Boolean(item.todos[0].group_name) }">
         <details v-if="item.todos[0].group_name" class="group-details">
-          <summary><span><strong>{{ item.title }}</strong><small>{{ item.todos.filter(todo => todo.completed).length }} of {{ item.todos.length }} done</small></span><span class="group-chevron" aria-hidden="true">⌄</span></summary>
+          <summary><span><strong>{{ item.title }}</strong><small>{{ item.todos.filter(todo => todo.completed).length }} of {{ item.todos.length }} done</small></span><span class="group-summary-progress"><strong>{{ groupPercentage(item.todos) }}%</strong><span class="group-chevron" aria-hidden="true">⌄</span></span></summary>
+          <span class="group-progress" role="progressbar" :aria-label="`${item.title} group progress`" :aria-valuenow="groupPercentage(item.todos)" aria-valuemin="0" aria-valuemax="100"><span :style="{ width: groupPercentage(item.todos) + '%' }"></span></span>
           <div class="group-items">
             <label v-for="todo in item.todos" :key="todo.id" :class="{ complete: todo.completed }">
               <input type="checkbox" :checked="Boolean(todo.completed)" @change="toggleGroupedTodo(todo)"><span class="check">✓</span><span>{{ todo.title }}</span>

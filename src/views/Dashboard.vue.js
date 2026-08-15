@@ -69,6 +69,11 @@ function taskPercentage(todo) {
     const total = (todo.duration_minutes ?? 30) * 60;
     return total ? Math.min(100, Number(((progressSeconds.value[todo.id] || 0) / total * 100).toFixed(1))) : 0;
 }
+function groupPercentage(group) {
+    if (!group.length)
+        return 0;
+    return Math.round(group.reduce((total, todo) => total + taskPercentage(todo), 0) / group.length);
+}
 function taskTimeLabel(todo) {
     const total = (todo.duration_minutes ?? 30) * 60;
     if (!total)
@@ -382,10 +387,28 @@ else {
             (item.todos.filter(todo => todo.completed).length);
             (item.todos.length);
             __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                ...{ class: "group-summary-progress" },
+            });
+            /** @type {__VLS_StyleScopedClasses['group-summary-progress']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.strong, __VLS_intrinsics.strong)({});
+            (__VLS_ctx.groupPercentage(item.todos));
+            __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
                 ...{ class: "group-chevron" },
                 'aria-hidden': "true",
             });
             /** @type {__VLS_StyleScopedClasses['group-chevron']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                ...{ class: "group-progress" },
+                role: "progressbar",
+                'aria-label': (`${item.title} group progress`),
+                'aria-valuenow': (__VLS_ctx.groupPercentage(item.todos)),
+                'aria-valuemin': "0",
+                'aria-valuemax': "100",
+            });
+            /** @type {__VLS_StyleScopedClasses['group-progress']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                ...{ style: ({ width: __VLS_ctx.groupPercentage(item.todos) + '%' }) },
+            });
             __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
                 ...{ class: "group-items" },
             });
@@ -408,7 +431,7 @@ else {
                                 throw 0;
                             return (__VLS_ctx.toggleGroupedTodo(todo));
                             // @ts-ignore
-                            [dateLabel, overallProgress, overallProgress, overallProgress, todaysTodos, todaysTodos, todaysTodos, todaysTodos, todaysTodos, compactList, compactList, compactList, toggleCompactList, saveError, saveError, loading, error, error, displayItems, toggleGroupedTodo,];
+                            [dateLabel, overallProgress, overallProgress, overallProgress, todaysTodos, todaysTodos, todaysTodos, todaysTodos, todaysTodos, compactList, compactList, compactList, toggleCompactList, saveError, saveError, loading, error, error, displayItems, groupPercentage, groupPercentage, groupPercentage, toggleGroupedTodo,];
                         } },
                     type: "checkbox",
                     checked: (Boolean(todo.completed)),
