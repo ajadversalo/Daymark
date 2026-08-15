@@ -5,10 +5,11 @@ import App from './App.vue'
 import Dashboard from './views/Dashboard.vue'
 import Settings from './views/Settings.vue'
 import Week from './views/Week.vue'
+import Month from './views/Month.vue'
 import './style.css'
 
 registerSW({ immediate: true })
 const router = createRouter({ history: createWebHistory(), routes: [
-  { path: '/', component: Dashboard }, { path: '/settings', component: Settings }, { path: '/week', component: Week }
+  { path: '/', component: Dashboard }, { path: '/settings', component: Settings }, { path: '/week', component: Week }, { path: '/month', component: Month }
 ] })
 createApp(App).use(router).mount('#app')
