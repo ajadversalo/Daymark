@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS todos (
   title TEXT NOT NULL,
   days TEXT NOT NULL,
   duration_minutes INTEGER NOT NULL DEFAULT 30,
+  group_name TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

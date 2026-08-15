@@ -2,12 +2,14 @@ import { onMounted, ref } from 'vue';
 import { api, dayNames } from '../types';
 const todos = ref([]);
 const title = ref('');
+const groupName = ref('');
 const duration = ref(30);
 const days = ref([1, 2, 3, 4, 5]);
 const error = ref('');
 const saving = ref(false);
 const editingId = ref(null);
 const editingTitle = ref('');
+const editingGroup = ref('');
 const editSaving = ref(false);
 const showAdd = ref(false);
 async function load() { try {
@@ -21,9 +23,10 @@ onMounted(load);
 function dayToggle(day) { days.value = days.value.includes(day) ? days.value.filter(d => d !== day) : [...days.value, day].sort(); }
 async function add() { if (!title.value.trim() || !days.value.length || duration.value < 0)
     return; saving.value = true; error.value = ''; try {
-    const item = await api('POST', { title: title.value.trim(), days: days.value, duration_minutes: duration.value });
+    const item = await api('POST', { title: title.value.trim(), group_name: groupName.value.trim() || null, days: days.value, duration_minutes: duration.value });
     todos.value.push({ ...item, completed: false });
     title.value = '';
+    groupName.value = '';
     duration.value = 30;
     days.value = [1, 2, 3, 4, 5];
     showAdd.value = false;
@@ -35,17 +38,19 @@ finally {
     saving.value = false;
 } }
 async function remove(todo) { await api('DELETE', { id: todo.id }); todos.value = todos.value.filter(t => t.id !== todo.id); }
-function beginEdit(todo) { editingId.value = todo.id; editingTitle.value = todo.title; }
-function cancelEdit() { editingId.value = null; editingTitle.value = ''; }
+function beginEdit(todo) { editingId.value = todo.id; editingTitle.value = todo.title; editingGroup.value = todo.group_name || ''; }
+function cancelEdit() { editingId.value = null; editingTitle.value = ''; editingGroup.value = ''; }
 async function saveEdit(todo) {
     const nextTitle = editingTitle.value.trim();
     if (!nextTitle)
         return;
     editSaving.value = true;
     error.value = '';
+    const nextGroup = editingGroup.value.trim() || null;
     try {
-        await api('PATCH', { id: todo.id, title: nextTitle });
+        await api('PATCH', { id: todo.id, title: nextTitle, group_name: nextGroup });
         todo.title = nextTitle;
+        todo.group_name = nextGroup;
         cancelEdit();
     }
     catch (e) {
@@ -133,12 +138,22 @@ else {
                 ...{ class: "inline-edit" },
             });
             /** @type {__VLS_StyleScopedClasses['inline-edit']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+                ...{ class: "inline-edit-fields" },
+            });
+            /** @type {__VLS_StyleScopedClasses['inline-edit-fields']} */ ;
             __VLS_asFunctionalElement1(__VLS_intrinsics.input)({
                 maxlength: "100",
                 'aria-label': (`Edit ${todo.title}`),
                 autofocus: true,
             });
             (__VLS_ctx.editingTitle);
+            __VLS_asFunctionalElement1(__VLS_intrinsics.input)({
+                maxlength: "60",
+                'aria-label': "Group name",
+                placeholder: "Group (optional)",
+            });
+            (__VLS_ctx.editingGroup);
             __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({});
             __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
                 type: "submit",
@@ -159,6 +174,13 @@ else {
             __VLS_asFunctionalElement1(__VLS_intrinsics.strong, __VLS_intrinsics.strong)({});
             (todo.title);
             __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({});
+            if (todo.group_name) {
+                __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                    ...{ class: "group-tag" },
+                });
+                /** @type {__VLS_StyleScopedClasses['group-tag']} */ ;
+                (todo.group_name);
+            }
             (todo.days.map(d => __VLS_ctx.dayNames[d]).join(' · '));
             ((todo.duration_minutes ?? 30) === 0 ? 'Untimed' : `${todo.duration_minutes ?? 30} min`);
             __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
@@ -173,7 +195,7 @@ else {
                             throw 0;
                         return (__VLS_ctx.beginEdit(todo));
                         // @ts-ignore
-                        [editingTitle, editingTitle, editSaving, editSaving, cancelEdit, dayNames, beginEdit,];
+                        [editingTitle, editingTitle, editingGroup, editSaving, editSaving, cancelEdit, dayNames, beginEdit,];
                     } },
                 ...{ class: "edit" },
             });
@@ -267,6 +289,24 @@ if (__VLS_ctx.showAdd) {
     });
     /** @type {__VLS_StyleScopedClasses['field']} */ ;
     /** @type {__VLS_StyleScopedClasses['duration-field']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+        ...{ class: "optional" },
+    });
+    /** @type {__VLS_StyleScopedClasses['optional']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.input)({
+        maxlength: "60",
+        placeholder: "e.g. Morning routine",
+    });
+    (__VLS_ctx.groupName);
+    __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+        ...{ class: "field-help" },
+    });
+    /** @type {__VLS_StyleScopedClasses['field-help']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.label, __VLS_intrinsics.label)({
+        ...{ class: "field duration-field" },
+    });
+    /** @type {__VLS_StyleScopedClasses['field']} */ ;
+    /** @type {__VLS_StyleScopedClasses['duration-field']} */ ;
     __VLS_asFunctionalElement1(__VLS_intrinsics.input, __VLS_intrinsics.input)({
         type: "number",
         min: "0",
@@ -292,7 +332,7 @@ if (__VLS_ctx.showAdd) {
                         throw 0;
                     return (__VLS_ctx.dayToggle(i));
                     // @ts-ignore
-                    [dayNames, title, duration, dayToggle,];
+                    [dayNames, title, groupName, duration, dayToggle,];
                 } },
             key: (day),
             type: "button",

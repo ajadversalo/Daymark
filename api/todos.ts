@@ -14,6 +14,7 @@ async function initialize() {
   ])
   const columns = await client.execute('PRAGMA table_info(todos)')
   if (!columns.rows.some(row => String(row.name) === 'duration_minutes')) await client.execute('ALTER TABLE todos ADD COLUMN duration_minutes INTEGER NOT NULL DEFAULT 30')
+  if (!columns.rows.some(row => String(row.name) === 'group_name')) await client.execute('ALTER TABLE todos ADD COLUMN group_name TEXT')
 }
 
 export default async function handler(request: Request) {
@@ -26,17 +27,19 @@ export default async function handler(request: Request) {
     const body = request.method === 'GET' ? {} : await request.json() as Record<string, any>
     if (request.method === 'GET') {
       const date = url.searchParams.get('date') || ''
-      const result = await client.execute({ sql: `SELECT t.id, t.title, t.days, t.duration_minutes, COALESCE(p.elapsed_seconds, 0) elapsed_seconds, CASE WHEN c.todo_id IS NULL THEN 0 ELSE 1 END completed FROM todos t LEFT JOIN completions c ON c.todo_id=t.id AND c.completed_on=? LEFT JOIN focus_progress p ON p.todo_id=t.id AND p.progress_on=? ORDER BY t.created_at`, args: [date, date] })
+      const result = await client.execute({ sql: `SELECT t.id, t.title, t.days, t.duration_minutes, t.group_name, COALESCE(p.elapsed_seconds, 0) elapsed_seconds, CASE WHEN c.todo_id IS NULL THEN 0 ELSE 1 END completed FROM todos t LEFT JOIN completions c ON c.todo_id=t.id AND c.completed_on=? LEFT JOIN focus_progress p ON p.todo_id=t.id AND p.progress_on=? ORDER BY t.created_at`, args: [date, date] })
       return Response.json(result.rows)
     }
     if (request.method === 'POST') {
       const requestedDuration = Number(body.duration_minutes)
       const duration = Number.isFinite(requestedDuration) ? Math.max(0, Math.min(240, requestedDuration)) : 30
-      const result = await client.execute({ sql: 'INSERT INTO todos(title, days, duration_minutes) VALUES (?, ?, ?)', args: [String(body.title), JSON.stringify(body.days), duration] })
-      return Response.json({ id: Number(result.lastInsertRowid), title: body.title, days: body.days, duration_minutes: duration }, { status: 201 })
+      const groupName = String(body.group_name || '').trim().slice(0, 60) || null
+      const result = await client.execute({ sql: 'INSERT INTO todos(title, days, duration_minutes, group_name) VALUES (?, ?, ?, ?)', args: [String(body.title), JSON.stringify(body.days), duration, groupName] })
+      return Response.json({ id: Number(result.lastInsertRowid), title: body.title, days: body.days, duration_minutes: duration, group_name: groupName }, { status: 201 })
     }
     if (request.method === 'PATCH') {
       if (body.title !== undefined) await client.execute({ sql: 'UPDATE todos SET title=? WHERE id=?', args: [String(body.title).trim().slice(0, 100), body.id] })
+      if (body.group_name !== undefined) await client.execute({ sql: 'UPDATE todos SET group_name=? WHERE id=?', args: [String(body.group_name || '').trim().slice(0, 60) || null, body.id] })
       if (body.elapsed_seconds !== undefined) await client.execute({ sql: 'INSERT INTO focus_progress(todo_id, progress_on, elapsed_seconds) VALUES (?, ?, ?) ON CONFLICT(todo_id, progress_on) DO UPDATE SET elapsed_seconds=excluded.elapsed_seconds', args: [body.id, body.date, Math.max(0, Number(body.elapsed_seconds) || 0)] })
       if (body.completed !== undefined) await client.execute(body.completed
         ? { sql: 'INSERT OR IGNORE INTO completions(todo_id, completed_on) VALUES (?, ?)', args: [body.id, body.date] }

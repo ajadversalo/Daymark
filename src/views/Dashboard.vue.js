@@ -8,6 +8,26 @@ const today = new Date();
 const todayIndex = today.getDay();
 const dateLabel = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 const todaysTodos = computed(() => todos.value.filter(t => t.days.includes(todayIndex)));
+const displayItems = computed(() => {
+    const entries = [];
+    const groups = new Map();
+    for (const todo of todaysTodos.value) {
+        const name = todo.group_name?.trim();
+        if (!name) {
+            entries.push({ key: `todo-${todo.id}`, title: todo.title, todos: [todo] });
+            continue;
+        }
+        const normalized = name.toLocaleLowerCase();
+        let group = groups.get(normalized);
+        if (!group) {
+            group = { key: `group-${normalized}`, title: name, todos: [] };
+            groups.set(normalized, group);
+            entries.push(group);
+        }
+        group.todos.push(todo);
+    }
+    return entries;
+});
 const overallProgress = computed(() => {
     if (!todaysTodos.value.length)
         return 0;
@@ -122,6 +142,18 @@ async function toggleUntimed() {
     }
     catch {
         todo.completed = previous;
+    }
+}
+async function toggleGroupedTodo(todo) {
+    const previous = Boolean(todo.completed);
+    todo.completed = !previous;
+    try {
+        await api('PATCH', { id: todo.id, date: isoDate(), completed: Boolean(todo.completed) });
+        saveError.value = '';
+    }
+    catch (cause) {
+        todo.completed = previous;
+        saveError.value = cause instanceof Error ? cause.message : 'Could not update item';
     }
 }
 function playButtonBeep(frequency) {
@@ -260,54 +292,120 @@ else {
         ...{ class: "todo-list" },
     });
     /** @type {__VLS_StyleScopedClasses['todo-list']} */ ;
-    for (const [todo] of __VLS_vFor((__VLS_ctx.todaysTodos))) {
+    for (const [item] of __VLS_vFor((__VLS_ctx.displayItems))) {
         __VLS_asFunctionalElement1(__VLS_intrinsics.li, __VLS_intrinsics.li)({
-            key: (todo.id),
-            ...{ class: ({ 'focus-complete': todo.completed }) },
+            key: (item.key),
+            ...{ class: ({ 'focus-complete': item.todos.length === 1 && item.todos[0].completed, 'task-group': Boolean(item.todos[0].group_name) }) },
         });
         /** @type {__VLS_StyleScopedClasses['focus-complete']} */ ;
-        __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
-            ...{ onClick: (...[$event]) => {
-                    if (!!(__VLS_ctx.loading))
-                        throw 0;
-                    if (!!(__VLS_ctx.error))
-                        throw 0;
-                    if (!!(!__VLS_ctx.todaysTodos.length))
-                        throw 0;
-                    return (__VLS_ctx.openTimer(todo));
-                    // @ts-ignore
-                    [dateLabel, overallProgress, overallProgress, overallProgress, todaysTodos, todaysTodos, todaysTodos, todaysTodos, todaysTodos, saveError, saveError, loading, error, error, openTimer,];
-                } },
-            ...{ class: "task-open" },
-        });
-        /** @type {__VLS_StyleScopedClasses['task-open']} */ ;
-        __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
-            ...{ class: "task-meta" },
-        });
-        /** @type {__VLS_StyleScopedClasses['task-meta']} */ ;
-        __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
-        (todo.title);
-        __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
-        (__VLS_ctx.taskPercentage(todo));
-        __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
-            ...{ class: "task-progress" },
-            role: "progressbar",
-            'aria-label': (`${todo.title} progress`),
-            'aria-valuenow': (__VLS_ctx.taskPercentage(todo)),
-            'aria-valuemin': "0",
-            'aria-valuemax': "100",
-        });
-        /** @type {__VLS_StyleScopedClasses['task-progress']} */ ;
-        __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
-            ...{ style: ({ width: __VLS_ctx.taskPercentage(todo) + '%' }) },
-        });
-        __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
-            ...{ class: "task-status" },
-        });
-        /** @type {__VLS_StyleScopedClasses['task-status']} */ ;
-        (todo.completed ? 'Completed ✓' : __VLS_ctx.taskTimeLabel(todo));
+        /** @type {__VLS_StyleScopedClasses['task-group']} */ ;
+        if (item.todos[0].group_name) {
+            __VLS_asFunctionalElement1(__VLS_intrinsics.details, __VLS_intrinsics.details)({
+                ...{ class: "group-details" },
+            });
+            /** @type {__VLS_StyleScopedClasses['group-details']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.summary, __VLS_intrinsics.summary)({});
+            __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
+            __VLS_asFunctionalElement1(__VLS_intrinsics.strong, __VLS_intrinsics.strong)({});
+            (item.title);
+            __VLS_asFunctionalElement1(__VLS_intrinsics.small, __VLS_intrinsics.small)({});
+            (item.todos.filter(todo => todo.completed).length);
+            (item.todos.length);
+            __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                ...{ class: "group-chevron" },
+                'aria-hidden': "true",
+            });
+            /** @type {__VLS_StyleScopedClasses['group-chevron']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+                ...{ class: "group-items" },
+            });
+            /** @type {__VLS_StyleScopedClasses['group-items']} */ ;
+            for (const [todo] of __VLS_vFor((item.todos))) {
+                __VLS_asFunctionalElement1(__VLS_intrinsics.label, __VLS_intrinsics.label)({
+                    key: (todo.id),
+                    ...{ class: ({ complete: todo.completed }) },
+                });
+                /** @type {__VLS_StyleScopedClasses['complete']} */ ;
+                __VLS_asFunctionalElement1(__VLS_intrinsics.input)({
+                    ...{ onChange: (...[$event]) => {
+                            if (!!(__VLS_ctx.loading))
+                                throw 0;
+                            if (!!(__VLS_ctx.error))
+                                throw 0;
+                            if (!!(!__VLS_ctx.todaysTodos.length))
+                                throw 0;
+                            if (!(item.todos[0].group_name))
+                                throw 0;
+                            return (__VLS_ctx.toggleGroupedTodo(todo));
+                            // @ts-ignore
+                            [dateLabel, overallProgress, overallProgress, overallProgress, todaysTodos, todaysTodos, todaysTodos, todaysTodos, saveError, saveError, loading, error, error, displayItems, toggleGroupedTodo,];
+                        } },
+                    type: "checkbox",
+                    checked: (Boolean(todo.completed)),
+                });
+                __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                    ...{ class: "check" },
+                });
+                /** @type {__VLS_StyleScopedClasses['check']} */ ;
+                __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
+                (todo.title);
+                // @ts-ignore
+                [];
+            }
+        }
+        else {
+            __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!!(__VLS_ctx.loading))
+                            throw 0;
+                        if (!!(__VLS_ctx.error))
+                            throw 0;
+                        if (!!(!__VLS_ctx.todaysTodos.length))
+                            throw 0;
+                        if (!!(item.todos[0].group_name))
+                            throw 0;
+                        return (__VLS_ctx.openTimer(item.todos[0]));
+                        // @ts-ignore
+                        [openTimer,];
+                    } },
+                ...{ class: "task-open" },
+            });
+            /** @type {__VLS_StyleScopedClasses['task-open']} */ ;
+            for (const [todo] of __VLS_vFor((item.todos))) {
+                __VLS_asFunctionalElement(__VLS_intrinsics.template)({
+                    key: (todo.id),
+                });
+                __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                    ...{ class: "task-meta" },
+                });
+                /** @type {__VLS_StyleScopedClasses['task-meta']} */ ;
+                __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
+                (todo.title);
+                __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
+                (__VLS_ctx.taskPercentage(todo));
+                __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                    ...{ class: "task-progress" },
+                    role: "progressbar",
+                    'aria-label': (`${todo.title} progress`),
+                    'aria-valuenow': (__VLS_ctx.taskPercentage(todo)),
+                    'aria-valuemin': "0",
+                    'aria-valuemax': "100",
+                });
+                /** @type {__VLS_StyleScopedClasses['task-progress']} */ ;
+                __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                    ...{ style: ({ width: __VLS_ctx.taskPercentage(todo) + '%' }) },
+                });
+                __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                    ...{ class: "task-status" },
+                });
+                /** @type {__VLS_StyleScopedClasses['task-status']} */ ;
+                (todo.completed ? 'Completed ✓' : __VLS_ctx.taskTimeLabel(todo));
+                // @ts-ignore
+                [taskPercentage, taskPercentage, taskPercentage, taskTimeLabel,];
+            }
+        }
         // @ts-ignore
-        [taskPercentage, taskPercentage, taskPercentage, taskTimeLabel,];
+        [];
     }
 }
 __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({

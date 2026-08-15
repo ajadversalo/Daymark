@@ -6,6 +6,19 @@ const todos = ref<Todo[]>([]); const loading = ref(true); const error = ref('');
 const today = new Date(); const todayIndex = today.getDay()
 const dateLabel = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 const todaysTodos = computed(() => todos.value.filter(t => t.days.includes(todayIndex)))
+type DisplayItem = { key: string; title: string; todos: Todo[] }
+const displayItems = computed<DisplayItem[]>(() => {
+  const entries: DisplayItem[] = []; const groups = new Map<string, DisplayItem>()
+  for (const todo of todaysTodos.value) {
+    const name = todo.group_name?.trim()
+    if (!name) { entries.push({ key: `todo-${todo.id}`, title: todo.title, todos: [todo] }); continue }
+    const normalized = name.toLocaleLowerCase()
+    let group = groups.get(normalized)
+    if (!group) { group = { key: `group-${normalized}`, title: name, todos: [] }; groups.set(normalized, group); entries.push(group) }
+    group.todos.push(todo)
+  }
+  return entries
+})
 const overallProgress = computed(() => {
   if (!todaysTodos.value.length) return 0
   return Math.round(todaysTodos.value.reduce((total, todo) => total + taskPercentage(todo), 0) / todaysTodos.value.length)
@@ -82,6 +95,11 @@ async function toggleUntimed() {
   try { await api('PATCH', { id: todo.id, date: isoDate(), completed: Boolean(todo.completed) }) }
   catch { todo.completed = previous }
 }
+async function toggleGroupedTodo(todo: Todo) {
+  const previous = Boolean(todo.completed); todo.completed = !previous
+  try { await api('PATCH', { id: todo.id, date: isoDate(), completed: Boolean(todo.completed) }); saveError.value = '' }
+  catch (cause) { todo.completed = previous; saveError.value = cause instanceof Error ? cause.message : 'Could not update item' }
+}
 function playButtonBeep(frequency: number) {
   if (!audioContext) return
   const now = audioContext.currentTime
@@ -140,11 +158,21 @@ function playCompletionChime() {
     <div v-else-if="error" class="state error"><strong>We couldn’t reach your list.</strong><br>{{ error }}</div>
     <div v-else-if="!todaysTodos.length" class="state"><span class="sun">☀</span><strong>A clear day.</strong><br>Add a recurring item in Settings when you’re ready.</div>
     <ul v-else class="todo-list">
-      <li v-for="todo in todaysTodos" :key="todo.id" :class="{ 'focus-complete': todo.completed }">
-        <button class="task-open" @click="openTimer(todo)">
+      <li v-for="item in displayItems" :key="item.key" :class="{ 'focus-complete': item.todos.length === 1 && item.todos[0].completed, 'task-group': Boolean(item.todos[0].group_name) }">
+        <details v-if="item.todos[0].group_name" class="group-details">
+          <summary><span><strong>{{ item.title }}</strong><small>{{ item.todos.filter(todo => todo.completed).length }} of {{ item.todos.length }} done</small></span><span class="group-chevron" aria-hidden="true">⌄</span></summary>
+          <div class="group-items">
+            <label v-for="todo in item.todos" :key="todo.id" :class="{ complete: todo.completed }">
+              <input type="checkbox" :checked="Boolean(todo.completed)" @change="toggleGroupedTodo(todo)"><span class="check">✓</span><span>{{ todo.title }}</span>
+            </label>
+          </div>
+        </details>
+        <button v-else class="task-open" @click="openTimer(item.todos[0])">
+          <template v-for="todo in item.todos" :key="todo.id">
           <span class="task-meta"><span>{{ todo.title }}</span><span>{{ taskPercentage(todo) }}%</span></span>
           <span class="task-progress" role="progressbar" :aria-label="`${todo.title} progress`" :aria-valuenow="taskPercentage(todo)" aria-valuemin="0" aria-valuemax="100"><span :style="{ width: taskPercentage(todo) + '%' }"></span></span>
           <span class="task-status">{{ todo.completed ? 'Completed ✓' : taskTimeLabel(todo) }}</span>
+          </template>
         </button>
       </li>
     </ul>

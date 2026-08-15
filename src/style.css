@@ -48,3 +48,9 @@ nav a.router-link-active{color:#123b61;background:var(--yellow)}
 [data-theme="dark"] .untimed-state>span{background:#173b55;color:var(--yellow)}
 [data-theme="dark"] .edit-cancel{background:#0b2235;border-color:#36536c;color:#b7c8d7}
 [data-theme="dark"] footer span:first-child{color:#b7c8d7}
+
+/* Compact grouped tasks */
+.inline-edit-fields{display:grid!important;grid-template-columns:1fr minmax(130px,.55fr);gap:7px!important;flex:1}.inline-edit-fields input{margin:0}.optional{float:right;color:var(--muted);font-size:11px;font-weight:500}.group-tag{display:inline-block;margin-right:7px;padding:2px 6px;border-radius:99px;background:#e6edf5;color:var(--green);font-size:10px;font-weight:700}
+.task-group{display:block!important}.group-details{width:100%}.group-details summary{display:flex;align-items:center;justify-content:space-between;padding:18px 2px;cursor:pointer;list-style:none}.group-details summary::-webkit-details-marker{display:none}.group-details summary>span:first-child{display:flex;flex-direction:column;gap:4px}.group-details summary strong{font-size:14px}.group-details summary small{color:var(--muted);font-size:11px}.group-chevron{color:var(--green);font-size:20px;transition:transform .2s}.group-details[open] .group-chevron{transform:rotate(180deg)}.group-items{margin:-5px 0 12px;padding:4px 12px;border-radius:9px;background:#f5f8fb}.todo-list .group-items label{padding:10px 2px;gap:10px;border-bottom:1px solid var(--line);font-size:13px}.todo-list .group-items label:last-child{border:0}.todo-list .group-items .check{width:20px;height:20px;border-radius:5px;font-size:12px}.group-items .complete>span:last-child{text-decoration:line-through;color:#98a2b3}
+[data-theme="dark"] .group-items{background:#0b2235}
+@media(max-width:700px){.inline-edit{align-items:stretch;flex-direction:column}.inline-edit-fields{grid-template-columns:1fr}.inline-edit>div:last-child{justify-content:flex-end}}

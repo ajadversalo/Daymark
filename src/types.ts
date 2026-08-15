@@ -1,4 +1,4 @@
-export type Todo = { id: number; title: string; days: number[]; duration_minutes: number; elapsed_seconds: number; completed: number | boolean }
+export type Todo = { id: number; title: string; days: number[]; duration_minutes: number; elapsed_seconds: number; completed: number | boolean; group_name: string | null }
 export const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 export const isoDate = () => new Date().toLocaleDateString('en-CA')
 
