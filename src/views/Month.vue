@@ -29,6 +29,7 @@ function statusFor(todos: Todo[]): DayStatus {
   if (!todos.length || todos.every(todo => taskProgress(todo) === 0)) return 'none'
   return todos.every(todo => taskProgress(todo) === 100) ? 'complete' : 'partial'
 }
+function statusIcon(status: DayStatus) { return { none: '☹', partial: '📈', complete: '🏆' }[status] }
 function statusLabel(day: MonthDay) { return `${day.date.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}: ${day.status}` }
 async function loadMonth() {
   loading.value = true; error.value = ''
@@ -55,9 +56,9 @@ onMounted(loadMonth)
     <section v-else class="month-calendar card" aria-label="Monthly progress">
       <div v-for="name in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="name" class="month-weekday">{{ name }}</div>
       <div v-for="day in days" :key="isoDate(day.date)" class="month-day" :class="[{ muted: !day.inMonth, today: isoDate(day.date) === isoDate() }, `status-${day.status}`]" :aria-label="statusLabel(day)">
-        <span class="month-date">{{ day.date.getDate() }}</span><span class="status-icon" aria-hidden="true"><span></span></span>
+        <span class="month-date">{{ day.date.getDate() }}</span><span class="status-icon" aria-hidden="true">{{ statusIcon(day.status) }}</span>
       </div>
     </section>
-    <div class="month-legend" aria-label="Status legend"><span><i class="status-icon status-none"><i></i></i>None</span><span><i class="status-icon status-partial"><i></i></i>Partial</span><span><i class="status-icon status-complete"><i></i></i>Complete</span></div>
+    <div class="month-legend" aria-label="Status legend"><span><i class="status-icon" aria-hidden="true">☹</i>None</span><span><i class="status-icon" aria-hidden="true">📈</i>Partial</span><span><i class="status-icon" aria-hidden="true">🏆</i>Complete</span></div>
   </div>
 </template>
