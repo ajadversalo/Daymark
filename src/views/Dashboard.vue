@@ -33,7 +33,7 @@ const displayItems = computed<DisplayItem[]>(() => {
     if (!group) { group = { key: `group-${normalized}`, title: name, todos: [] }; groups.set(normalized, group); entries.push(group) }
     group.todos.push(todo)
   }
-  return entries
+  return entries.sort((a, b) => Number(Boolean(b.todos[0].group_name?.trim())) - Number(Boolean(a.todos[0].group_name?.trim())))
 })
 const overallProgress = computed(() => {
   if (!todaysTodos.value.length) return 0
