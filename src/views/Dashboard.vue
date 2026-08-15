@@ -16,6 +16,14 @@ function cacheTodos() {
 }
 const initialCache = readCachedTodos(todayKey.value)
 const todos = ref<Todo[]>(initialCache ?? []); const loading = ref(initialCache === null); const error = ref(''); const saveError = ref('')
+const syncState = ref<'idle' | 'syncing' | 'synced' | 'error'>('idle')
+const lastSyncedAt = ref<Date | null>(null)
+const syncMessage = computed(() => {
+  if (syncState.value === 'syncing') return 'Syncing…'
+  if (syncState.value === 'error') return 'Sync failed — try again'
+  if (syncState.value === 'synced' && lastSyncedAt.value) return `Synced ${lastSyncedAt.value.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+  return 'Sync'
+})
 const compactList = ref(localStorage.getItem('daymark-compact-list') === 'true')
 function toggleCompactList() { compactList.value = !compactList.value; localStorage.setItem('daymark-compact-list', String(compactList.value)) }
 const todayIndex = computed(() => today.value.getDay())
@@ -65,14 +73,16 @@ function taskTimeLabel(todo: Todo) {
   return `${format(elapsed)} of ${format(total)}`
 }
 async function loadTodos() {
+  if (syncState.value === 'syncing') return
+  syncState.value = 'syncing'
   const cached = readCachedTodos(todayKey.value)
   if (cached) {
     todos.value = cached
     progressSeconds.value = Object.fromEntries(cached.map(todo => [todo.id, Number(todo.elapsed_seconds) || 0]))
   }
   loading.value = cached === null
-  try { const rows = await api<any[]>(); todos.value = rows.map(t => ({ ...t, days: Array.isArray(t.days) ? t.days : JSON.parse(t.days), elapsed_seconds: Number(t.elapsed_seconds) || 0 })); progressSeconds.value = Object.fromEntries(todos.value.map(todo => [todo.id, todo.elapsed_seconds])); cacheTodos(); error.value = '' }
-  catch(e) { if (cached === null) error.value = e instanceof Error ? e.message : 'Could not load todos' }
+  try { const rows = await api<any[]>(); todos.value = rows.map(t => ({ ...t, days: Array.isArray(t.days) ? t.days : JSON.parse(t.days), elapsed_seconds: Number(t.elapsed_seconds) || 0 })); progressSeconds.value = Object.fromEntries(todos.value.map(todo => [todo.id, todo.elapsed_seconds])); cacheTodos(); error.value = ''; lastSyncedAt.value = new Date(); syncState.value = 'synced' }
+  catch(e) { syncState.value = 'error'; if (cached === null) error.value = e instanceof Error ? e.message : 'Could not load todos' }
   finally { loading.value = false }
 }
 function refreshLocalDate() {
