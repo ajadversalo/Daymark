@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
+import { requestSync, syncMessage, syncState } from './sync'
 
 const savedTheme = localStorage.getItem('daymark-theme')
 const dark = ref(savedTheme ? savedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches)
@@ -16,6 +17,7 @@ applyTheme()
   <div class="shell">
     <header>
       <RouterLink to="/" class="brand" aria-label="Daymark home"><span class="brand-mark">✓</span> daymark</RouterLink>
+      <button class="sync-button header-sync" :class="`sync-${syncState}`" :disabled="syncState === 'syncing'" :aria-label="syncState === 'syncing' ? 'Syncing tasks' : 'Sync tasks'" @click="requestSync"><span class="sync-icon" aria-hidden="true">↻</span>{{ syncMessage }}</button>
       <nav aria-label="Main navigation">
         <RouterLink to="/">Today</RouterLink><button class="theme-toggle" :aria-label="`Switch to ${dark ? 'light' : 'dark'} mode`" :title="`${dark ? 'Light' : 'Dark'} mode`" @click="toggleTheme"><span aria-hidden="true">{{ dark ? '☀' : '☾' }}</span></button>
       </nav>

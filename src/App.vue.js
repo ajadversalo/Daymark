@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { RouterLink, RouterView } from 'vue-router';
+import { requestSync, syncMessage, syncState } from './sync';
 const savedTheme = localStorage.getItem('daymark-theme');
 const dark = ref(savedTheme ? savedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches);
 function applyTheme() {
@@ -41,6 +42,21 @@ __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
 });
 /** @type {__VLS_StyleScopedClasses['brand-mark']} */ ;
 var __VLS_3;
+__VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+    ...{ onClick: (__VLS_ctx.requestSync) },
+    ...{ class: "sync-button header-sync" },
+    ...{ class: (`sync-${__VLS_ctx.syncState}`) },
+    disabled: (__VLS_ctx.syncState === 'syncing'),
+    'aria-label': (__VLS_ctx.syncState === 'syncing' ? 'Syncing tasks' : 'Sync tasks'),
+});
+/** @type {__VLS_StyleScopedClasses['sync-button']} */ ;
+/** @type {__VLS_StyleScopedClasses['header-sync']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+    ...{ class: "sync-icon" },
+    'aria-hidden': "true",
+});
+/** @type {__VLS_StyleScopedClasses['sync-icon']} */ ;
+(__VLS_ctx.syncMessage);
 __VLS_asFunctionalElement1(__VLS_intrinsics.nav, __VLS_intrinsics.nav)({
     'aria-label': "Main navigation",
 });
@@ -55,6 +71,8 @@ const __VLS_8 = __VLS_7({
     to: "/",
 }, ...__VLS_functionalComponentArgsRest(__VLS_7));
 const { default: __VLS_11 } = __VLS_9.slots;
+// @ts-ignore
+[requestSync, syncState, syncState, syncState, syncMessage,];
 var __VLS_9;
 __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
     ...{ onClick: (__VLS_ctx.toggleTheme) },

@@ -1,4 +1,5 @@
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { lastSyncedAt, syncRequest, syncState } from '../sync';
 import { api, isoDate } from '../types';
 const today = ref(new Date());
 const todayKey = computed(() => isoDate(today.value));
@@ -83,6 +84,9 @@ function taskTimeLabel(todo) {
     return `${format(elapsed)} of ${format(total)}`;
 }
 async function loadTodos() {
+    if (syncState.value === 'syncing')
+        return;
+    syncState.value = 'syncing';
     const cached = readCachedTodos(todayKey.value);
     if (cached) {
         todos.value = cached;
@@ -95,8 +99,11 @@ async function loadTodos() {
         progressSeconds.value = Object.fromEntries(todos.value.map(todo => [todo.id, todo.elapsed_seconds]));
         cacheTodos();
         error.value = '';
+        lastSyncedAt.value = new Date();
+        syncState.value = 'synced';
     }
     catch (e) {
+        syncState.value = 'error';
         if (cached === null)
             error.value = e instanceof Error ? e.message : 'Could not load todos';
     }
@@ -122,6 +129,7 @@ function scheduleLocalMidnight() {
     midnightTimer = setTimeout(refreshLocalDate, nextMidnight.getTime() - now.getTime() + 1000);
 }
 onMounted(() => { void loadTodos(); scheduleLocalMidnight(); window.addEventListener('keydown', onKeydown); document.addEventListener('visibilitychange', refreshLocalDate); });
+watch(syncRequest, () => { void loadTodos(); });
 onBeforeUnmount(() => { saveActiveProgress(); stopTimer(); if (midnightTimer)
     clearTimeout(midnightTimer); window.removeEventListener('keydown', onKeydown); document.removeEventListener('visibilitychange', refreshLocalDate); });
 function openTimer(todo) { saveActiveProgress(); stopTimer(); activeTodo.value = todo; timerDuration.value = (todo.duration_minutes ?? 30) * 60; secondsLeft.value = Math.max(0, timerDuration.value - (progressSeconds.value[todo.id] || 0)); }
