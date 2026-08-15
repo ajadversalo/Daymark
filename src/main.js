@@ -4,9 +4,10 @@ import { registerSW } from 'virtual:pwa-register';
 import App from './App.vue';
 import Dashboard from './views/Dashboard.vue';
 import Settings from './views/Settings.vue';
+import Week from './views/Week.vue';
 import './style.css';
 registerSW({ immediate: true });
 const router = createRouter({ history: createWebHistory(), routes: [
-        { path: '/', component: Dashboard }, { path: '/settings', component: Settings }
+        { path: '/', component: Dashboard }, { path: '/settings', component: Settings }, { path: '/week', component: Week }
     ] });
 createApp(App).use(router).mount('#app');

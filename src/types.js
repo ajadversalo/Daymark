@@ -5,8 +5,8 @@ export function isoDate(date = new Date()) {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
-export async function api(method = 'GET', body) {
-    const url = method === 'GET' ? `/api/todos?date=${isoDate()}` : '/api/todos';
+export async function api(method = 'GET', body, date = isoDate()) {
+    const url = method === 'GET' ? `/api/todos?date=${encodeURIComponent(date)}` : '/api/todos';
     const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
     const data = await response.json();
     if (!response.ok)

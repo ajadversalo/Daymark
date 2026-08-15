@@ -47,7 +47,8 @@ __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
     ...{ class: "sync-button header-sync" },
     ...{ class: (`sync-${__VLS_ctx.syncState}`) },
     disabled: (__VLS_ctx.syncState === 'syncing'),
-    'aria-label': (__VLS_ctx.syncState === 'syncing' ? 'Syncing tasks' : 'Sync tasks'),
+    'aria-label': (__VLS_ctx.syncMessage),
+    title: (__VLS_ctx.syncMessage),
 });
 /** @type {__VLS_StyleScopedClasses['sync-button']} */ ;
 /** @type {__VLS_StyleScopedClasses['header-sync']} */ ;
@@ -56,7 +57,6 @@ __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
     'aria-hidden': "true",
 });
 /** @type {__VLS_StyleScopedClasses['sync-icon']} */ ;
-(__VLS_ctx.syncMessage);
 __VLS_asFunctionalElement1(__VLS_intrinsics.nav, __VLS_intrinsics.nav)({
     'aria-label': "Main navigation",
 });
@@ -72,7 +72,7 @@ const __VLS_8 = __VLS_7({
 }, ...__VLS_functionalComponentArgsRest(__VLS_7));
 const { default: __VLS_11 } = __VLS_9.slots;
 // @ts-ignore
-[requestSync, syncState, syncState, syncState, syncMessage,];
+[requestSync, syncState, syncState, syncMessage, syncMessage,];
 var __VLS_9;
 __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
     ...{ onClick: (__VLS_ctx.toggleTheme) },
@@ -118,6 +118,30 @@ __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
 [toggleTheme, dark, dark, dark,];
 var __VLS_20;
 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
+let __VLS_23;
+/** @ts-ignore @type { | typeof __VLS_components.RouterLink | typeof __VLS_components.RouterLink} */
+RouterLink;
+// @ts-ignore
+const __VLS_24 = __VLS_asFunctionalComponent1(__VLS_23, new __VLS_23({
+    to: "/week",
+    ...{ class: "week-link" },
+    'aria-label': "Week view",
+    title: "Week view",
+}));
+const __VLS_25 = __VLS_24({
+    to: "/week",
+    ...{ class: "week-link" },
+    'aria-label': "Week view",
+    title: "Week view",
+}, ...__VLS_functionalComponentArgsRest(__VLS_24));
+/** @type {__VLS_StyleScopedClasses['week-link']} */ ;
+const { default: __VLS_28 } = __VLS_26.slots;
+__VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+    'aria-hidden': "true",
+});
+// @ts-ignore
+[];
+var __VLS_26;
 // @ts-ignore
 [];
 const __VLS_export = (await import('vue')).defineComponent({});

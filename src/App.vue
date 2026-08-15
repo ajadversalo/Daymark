@@ -23,6 +23,6 @@ applyTheme()
       </nav>
     </header>
     <main><RouterView /></main>
-    <footer><RouterLink to="/settings" class="settings-link" aria-label="Settings" title="Settings"><span aria-hidden="true">⚙︎</span></RouterLink><span>Small steps, every day.</span></footer>
+    <footer><RouterLink to="/settings" class="settings-link" aria-label="Settings" title="Settings"><span aria-hidden="true">⚙︎</span></RouterLink><span>Small steps, every day.</span><RouterLink to="/week" class="week-link" aria-label="Week view" title="Week view"><span aria-hidden="true">▦</span></RouterLink></footer>
   </div>
 </template>

@@ -7,8 +7,8 @@ export function isoDate(date = new Date()) {
   return `${year}-${month}-${day}`
 }
 
-export async function api<T>(method = 'GET', body?: unknown): Promise<T> {
-  const url = method === 'GET' ? `/api/todos?date=${isoDate()}` : '/api/todos'
+export async function api<T>(method = 'GET', body?: unknown, date = isoDate()): Promise<T> {
+  const url = method === 'GET' ? `/api/todos?date=${encodeURIComponent(date)}` : '/api/todos'
   const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
   const data = await response.json()
   if (!response.ok) throw new Error(data.error || 'Something went wrong')
