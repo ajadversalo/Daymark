@@ -16,7 +16,7 @@ nav{align-items:center}
 /* Blue + yellow theme */
 :root{--ink:#102a43;--muted:#62748a;--green:#1769aa;--yellow:#ffd43b;--line:#d6e2f0;--paper:#fff;background:#eef5ff}
 body{background:linear-gradient(145deg,#f7faff 0%,#e8f2ff 100%)}
-.brand-mark{background:var(--yellow);color:#123b61;box-shadow:0 0 0 2px var(--green)}
+.brand-mark{background:var(--yellow);color:#123b61;box-shadow:none}
 nav a.router-link-active{color:#123b61;background:var(--yellow)}
 .eyebrow{color:#4c6f91}
 .card{border-color:var(--line);border-top:4px solid var(--yellow);box-shadow:0 8px 24px rgba(23,105,170,.08)}
