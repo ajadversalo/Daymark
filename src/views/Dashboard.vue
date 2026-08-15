@@ -208,7 +208,7 @@ function playCompletionChime() {
     </div>
   </section>
   <section class="card focus-card" :class="{ 'compact-list': compactList }" aria-live="polite">
-    <div class="card-head"><div><p class="eyebrow">Today’s focus</p><h2>{{ todaysTodos.length }} {{ todaysTodos.length === 1 ? 'task' : 'tasks' }}</h2></div><div class="list-head-actions"><span class="list-readonly">Select a task to begin</span><button v-if="todaysTodos.length" class="density-toggle" :aria-pressed="compactList" @click="toggleCompactList">{{ compactList ? 'Comfortable' : 'Condense' }}</button></div></div>
+    <div class="card-head"><div><p class="eyebrow">Today’s focus</p><h2>{{ todaysTodos.length }} {{ todaysTodos.length === 1 ? 'task' : 'tasks' }}</h2></div><div class="list-head-actions"><span class="list-readonly">Select a task to begin</span><button class="sync-button" :class="`sync-${syncState}`" :disabled="syncState === 'syncing'" :aria-label="syncState === 'syncing' ? 'Syncing tasks' : 'Sync tasks'" @click="loadTodos"><span class="sync-icon" aria-hidden="true">↻</span>{{ syncMessage }}</button><button v-if="todaysTodos.length" class="density-toggle" :aria-pressed="compactList" @click="toggleCompactList">{{ compactList ? 'Comfortable' : 'Condense' }}</button></div></div>
     <p v-if="saveError" class="save-error" role="alert">Progress isn’t saving: {{ saveError }}</p>
     <p v-if="loading" class="state">Gathering your day…</p>
     <div v-else-if="error" class="state error"><strong>We couldn’t reach your list.</strong><br>{{ error }}</div>
