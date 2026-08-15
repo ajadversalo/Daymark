@@ -72,6 +72,15 @@ body{min-height:0}
 .dashboard-view .focus-card{flex:1 1 0;min-height:0}
 @media(max-width:700px){.shell>footer{margin-top:0}}
 @media(max-height:600px){.dashboard-view .hero{padding-top:20px;padding-bottom:16px}.dashboard-note{margin-top:12px;margin-bottom:12px}}
+
+/* Neutral charcoal dark theme with readable grouped-item labels. */
+[data-theme="dark"]{--ink:#f2f4f7;--muted:#a7adb7;--green:#79b8e8;--line:#3b3f46;--paper:#25282d;background:#181a1e}
+[data-theme="dark"] body{background:linear-gradient(145deg,#1d1f23 0%,#141518 100%)}
+[data-theme="dark"] .card,[data-theme="dark"] .timer-modal{background:#25282d;border-color:#3b3f46}
+[data-theme="dark"] input,[data-theme="dark"] .day-picker button,[data-theme="dark"] .edit-cancel,[data-theme="dark"] .untimed-state,[data-theme="dark"] .group-items,[data-theme="dark"] .clear-progress-trigger,[data-theme="dark"] .confirm-clear{background:#1c1e22;border-color:#474b53}
+[data-theme="dark"] .modal-close{background:#34373d;color:#d5d8de}
+[data-theme="dark"] .task-progress,[data-theme="dark"] .progress,[data-theme="dark"] .group-progress{background:#3a3e45}
+[data-theme="dark"] .group-tag{background:#3a4652;color:#d8efff;border:1px solid #59738a}
 [data-theme="dark"] .density-toggle{border-color:#36536c;color:#b7c8d7}
 [data-theme="dark"] .clear-progress-trigger,[data-theme="dark"] .confirm-clear{background:#0b2235;border-color:#b5473e;color:#fda29b}
 [data-theme="dark"] .inline-error,[data-theme="dark"] .error{color:#ffaaa4}
