@@ -210,7 +210,7 @@ function playCompletionChime() {
     <ul v-else class="todo-list">
       <li v-for="item in displayItems" :key="item.key" :class="{ 'focus-complete': item.todos.length === 1 && item.todos[0].completed, 'task-group': Boolean(item.todos[0].group_name) }">
         <details v-if="item.todos[0].group_name" class="group-details">
-          <summary><span><strong>{{ item.title }}</strong><small>{{ item.todos.filter(todo => todo.completed).length }} of {{ item.todos.length }} done</small></span><span class="group-summary-progress"><strong>{{ groupPercentage(item.todos) }}%</strong><span class="group-chevron" aria-hidden="true">⌄</span></span></summary>
+          <summary><span><strong>{{ item.title }}</strong><small>{{ item.todos.filter(todo => todo.completed).length }} of {{ item.todos.length }} done</small></span><span class="group-summary-progress"><span v-if="groupPercentage(item.todos) === 100" class="completion-check" aria-hidden="true">✓</span><strong>{{ groupPercentage(item.todos) }}%</strong><span class="group-chevron" aria-hidden="true">⌄</span></span></summary>
           <span class="group-progress" role="progressbar" :aria-label="`${item.title} group progress`" :aria-valuenow="groupPercentage(item.todos)" aria-valuemin="0" aria-valuemax="100"><span :style="{ width: groupPercentage(item.todos) + '%' }"></span></span>
           <div class="group-items">
             <label v-for="todo in item.todos" :key="todo.id" :class="{ complete: todo.completed }">
@@ -220,7 +220,7 @@ function playCompletionChime() {
         </details>
         <button v-else class="task-open" @click="openTimer(item.todos[0])">
           <template v-for="todo in item.todos" :key="todo.id">
-          <span class="task-meta"><span>{{ todo.title }}</span><span>{{ taskPercentage(todo) }}%</span></span>
+          <span class="task-meta"><span>{{ todo.title }}</span><span class="task-percentage"><span v-if="taskPercentage(todo) === 100" class="completion-check" aria-hidden="true">✓</span>{{ taskPercentage(todo) }}%</span></span>
           <span class="task-progress" role="progressbar" :aria-label="`${todo.title} progress`" :aria-valuenow="taskPercentage(todo)" aria-valuemin="0" aria-valuemax="100"><span :style="{ width: taskPercentage(todo) + '%' }"></span></span>
           <span class="task-status">{{ todo.completed ? 'Completed ✓' : taskTimeLabel(todo) }}</span>
           </template>
