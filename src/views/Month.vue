@@ -29,7 +29,7 @@ function statusFor(todos: Todo[]): DayStatus {
   if (!todos.length || todos.every(todo => taskProgress(todo) === 0)) return 'none'
   return todos.every(todo => taskProgress(todo) === 100) ? 'complete' : 'partial'
 }
-function statusIcon(status: DayStatus) { return { none: '☹', partial: '📈', complete: '🏆' }[status] }
+function statusIcon(status: DayStatus) { return { none: '', partial: '📈', complete: '🏆' }[status] }
 function statusLabel(day: MonthDay) { return `${day.date.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}: ${day.status}` }
 async function loadMonth() {
   loading.value = true; error.value = ''
@@ -56,9 +56,9 @@ onMounted(loadMonth)
     <section v-else class="month-calendar card" aria-label="Monthly progress">
       <div v-for="name in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="name" class="month-weekday">{{ name }}</div>
       <div v-for="day in days" :key="isoDate(day.date)" class="month-day" :class="[{ muted: !day.inMonth, today: isoDate(day.date) === isoDate() }, `status-${day.status}`]" :aria-label="statusLabel(day)">
-        <span class="month-date">{{ day.date.getDate() }}</span><span class="status-icon" aria-hidden="true">{{ statusIcon(day.status) }}</span>
+        <span class="month-date">{{ day.date.getDate() }}</span><span class="status-icon" aria-hidden="true"><svg v-if="day.status === 'none'" class="sad-face-icon" viewBox="0 0 64 64"><circle cx="32" cy="32" r="29"/><path d="M15 23c0 5 3 8 7 8s7-3 7-8M35 23c0 5 3 8 7 8s7-3 7-8M18 47c8-8 20-8 28 0"/></svg><template v-else>{{ statusIcon(day.status) }}</template></span>
       </div>
     </section>
-    <div class="month-legend" aria-label="Status legend"><span><i class="status-icon" aria-hidden="true">☹</i>None</span><span><i class="status-icon" aria-hidden="true">📈</i>Partial</span><span><i class="status-icon" aria-hidden="true">🏆</i>Complete</span></div>
+    <div class="month-legend" aria-label="Status legend"><span><i class="status-icon" aria-hidden="true"><svg class="sad-face-icon" viewBox="0 0 64 64"><circle cx="32" cy="32" r="29"/><path d="M15 23c0 5 3 8 7 8s7-3 7-8M35 23c0 5 3 8 7 8s7-3 7-8M18 47c8-8 20-8 28 0"/></svg></i>None</span><span><i class="status-icon" aria-hidden="true">📈</i>Partial</span><span><i class="status-icon" aria-hidden="true">🏆</i>Complete</span></div>
   </div>
 </template>
