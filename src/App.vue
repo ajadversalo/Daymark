@@ -17,9 +17,9 @@ applyTheme()
   <div class="shell">
     <header>
       <RouterLink to="/" class="brand" aria-label="Daymark home"><span class="brand-mark">✓</span> daymark</RouterLink>
-      <button class="sync-button header-sync" :class="`sync-${syncState}`" :disabled="syncState === 'syncing'" :aria-label="syncMessage" :title="syncMessage" @click="requestSync"><span class="sync-icon" aria-hidden="true">↻</span></button>
       <nav aria-label="Main navigation">
         <button class="theme-toggle" :aria-label="`Switch to ${dark ? 'light' : 'dark'} mode`" :title="`${dark ? 'Light' : 'Dark'} mode`" @click="toggleTheme"><span aria-hidden="true">{{ dark ? '☀' : '☾' }}</span></button>
+        <button class="sync-button header-sync" :class="`sync-${syncState}`" :disabled="syncState === 'syncing'" :aria-label="syncMessage" :title="syncMessage" @click="requestSync"><span class="sync-icon" aria-hidden="true">↻</span></button>
       </nav>
     </header>
     <main><RouterView /></main>
