@@ -122,7 +122,7 @@ body{background:#f3f3f4}
 .task-progress>span,.group-progress>span{background:var(--green)}
 .focus-complete .task-meta>span:last-child,.focus-complete .task-status{color:var(--green)}
 .focus-complete .task-progress>span{background:var(--green)}
-.task-percentage{display:inline-flex;align-items:center;gap:5px}.completion-check{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--green);color:#fff;font-size:10px;font-weight:700;line-height:1}
+.task-percentage{display:inline-flex;align-items:center;gap:6px}.completion-check{position:relative;display:inline-block;flex:none;width:18px;height:18px;border:1px solid #c4931e;border-radius:50%;background:linear-gradient(145deg,#f4d477,#d5a72f);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 1px 2px rgba(83,61,10,.18);color:transparent;font-size:0}.completion-check::after{content:'';position:absolute;width:4px;height:7px;left:6px;top:3px;border-right:2px solid #24282e;border-bottom:2px solid #24282e;transform:rotate(45deg)}
 .progress-pie{background:conic-gradient(var(--green) var(--overall-progress),#dedfe3 0)}
 .timer-ring{background:conic-gradient(var(--green) var(--timer-progress),#dedfe3 0)}
 .settings-link:hover,.settings-link.router-link-active,.week-link:hover,.week-link.router-link-active{background:var(--green);color:#fff}
