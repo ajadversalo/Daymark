@@ -12,6 +12,7 @@ const editingTitle = ref('')
 const editingGroup = ref('')
 const editSaving = ref(false)
 const editError = ref('')
+const updateError = ref('')
 
 function startOfWeek(date: Date) {
   const start = new Date(date.getFullYear(), date.getMonth(), date.getDate())
@@ -66,6 +67,17 @@ async function saveEdit() {
   } catch (cause) { editError.value = cause instanceof Error ? cause.message : 'Could not update the item' }
   finally { editSaving.value = false }
 }
+async function toggleComplete(todo: Todo, date: Date) {
+  const previous = Boolean(todo.completed)
+  todo.completed = !previous
+  try {
+    await api('PATCH', { id: todo.id, date: isoDate(date), completed: Boolean(todo.completed) })
+    updateError.value = ''
+  } catch (cause) {
+    todo.completed = previous
+    updateError.value = cause instanceof Error ? cause.message : 'Could not update the item'
+  }
+}
 onMounted(loadWeek)
 </script>
 
@@ -77,12 +89,13 @@ onMounted(loadWeek)
     </section>
     <section v-if="loading" class="card state">Loading your week…</section>
     <section v-else-if="error" class="card state error"><strong>We couldn’t load your week.</strong><br>{{ error }}</section>
-    <section v-else class="week-grid" aria-label="Weekly tasks">
+    <p v-if="updateError" class="save-error" role="alert">Progress isn’t saving: {{ updateError }}</p>
+    <section v-if="!loading && !error" class="week-grid" aria-label="Weekly tasks">
       <article v-for="day in days" :key="isoDate(day.date)" class="card week-day" :class="{ today: isoDate(day.date) === isoDate() }">
         <header><div><span>{{ day.date.toLocaleDateString(undefined, { weekday: 'short' }) }}</span><strong>{{ day.date.getDate() }}</strong></div><span>{{ dayProgress(day.todos) }}%</span></header>
         <div class="week-day-progress"><span :style="{ width: dayProgress(day.todos) + '%' }"></span></div>
         <p v-if="!day.todos.length" class="week-empty">Clear day</p>
-        <ul v-else><li v-for="todo in day.todos" :key="todo.id" :class="{ complete: todo.completed }"><button class="week-item" :aria-label="`Edit ${todo.title}`" @click="beginEdit(todo)"><span class="week-check">{{ todo.completed ? '✓' : '' }}</span><span><strong>{{ todo.title }}</strong><small v-if="todo.group_name">{{ todo.group_name }}</small></span></button></li></ul>
+        <ul v-else><li v-for="todo in day.todos" :key="todo.id" :class="{ complete: todo.completed }"><button class="week-check" :aria-label="`${todo.completed ? 'Mark incomplete' : 'Mark done'}: ${todo.title}`" :aria-pressed="Boolean(todo.completed)" @click="toggleComplete(todo, day.date)">{{ todo.completed ? '✓' : '' }}</button><button class="week-item" :aria-label="`Edit ${todo.title}`" @click="beginEdit(todo)"><span><strong>{{ todo.title }}</strong><small v-if="todo.group_name">{{ todo.group_name }}</small></span></button></li></ul>
       </article>
     </section>
     <Teleport to="body">
