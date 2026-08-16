@@ -4,6 +4,11 @@ const weekOffset = ref(0);
 const days = ref([]);
 const loading = ref(true);
 const error = ref('');
+const editingTodo = ref(null);
+const editingTitle = ref('');
+const editingGroup = ref('');
+const editSaving = ref(false);
+const editError = ref('');
 function startOfWeek(date) {
     const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     start.setDate(start.getDate() - ((start.getDay() + 6) % 7) + weekOffset.value * 7);
@@ -49,6 +54,35 @@ async function loadWeek() {
 }
 function changeWeek(amount) { weekOffset.value += amount; void loadWeek(); }
 function returnToThisWeek() { weekOffset.value = 0; void loadWeek(); }
+function beginEdit(todo) {
+    editingTodo.value = todo;
+    editingTitle.value = todo.title;
+    editingGroup.value = todo.group_name || '';
+    editError.value = '';
+}
+function cancelEdit() {
+    editingTodo.value = null;
+    editingTitle.value = '';
+    editingGroup.value = '';
+    editError.value = '';
+}
+async function saveEdit() {
+    if (!editingTodo.value || !editingTitle.value.trim())
+        return;
+    editSaving.value = true;
+    editError.value = '';
+    try {
+        await api('PATCH', { id: editingTodo.value.id, title: editingTitle.value.trim(), group_name: editingGroup.value.trim() || null });
+        cancelEdit();
+        await loadWeek();
+    }
+    catch (cause) {
+        editError.value = cause instanceof Error ? cause.message : 'Could not update the item';
+    }
+    finally {
+        editSaving.value = false;
+    }
+}
 onMounted(loadWeek);
 const __VLS_ctx = {
     ...{},
@@ -166,6 +200,22 @@ else {
                     ...{ class: ({ complete: todo.completed }) },
                 });
                 /** @type {__VLS_StyleScopedClasses['complete']} */ ;
+                __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+                    ...{ onClick: (...[$event]) => {
+                            if (!!(__VLS_ctx.loading))
+                                throw 0;
+                            if (!!(__VLS_ctx.error))
+                                throw 0;
+                            if (!!(!day.todos.length))
+                                throw 0;
+                            return (__VLS_ctx.beginEdit(todo));
+                            // @ts-ignore
+                            [loading, error, error, days, isoDate, isoDate, isoDate, dayProgress, dayProgress, beginEdit,];
+                        } },
+                    ...{ class: "week-item" },
+                    'aria-label': (`Edit ${todo.title}`),
+                });
+                /** @type {__VLS_StyleScopedClasses['week-item']} */ ;
                 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
                     ...{ class: "week-check" },
                 });
@@ -179,13 +229,108 @@ else {
                     (todo.group_name);
                 }
                 // @ts-ignore
-                [loading, error, error, days, isoDate, isoDate, isoDate, dayProgress, dayProgress,];
+                [];
             }
         }
         // @ts-ignore
         [];
     }
 }
+let __VLS_0;
+/** @ts-ignore @type { | typeof __VLS_components.Teleport | typeof __VLS_components.Teleport} */
+Teleport;
+// @ts-ignore
+const __VLS_1 = __VLS_asFunctionalComponent1(__VLS_0, new __VLS_0({
+    to: "body",
+}));
+const __VLS_2 = __VLS_1({
+    to: "body",
+}, ...__VLS_functionalComponentArgsRest(__VLS_1));
+const { default: __VLS_5 } = __VLS_3.slots;
+if (__VLS_ctx.editingTodo) {
+    __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+        ...{ onClick: (__VLS_ctx.cancelEdit) },
+        ...{ class: "modal-backdrop" },
+        role: "presentation",
+    });
+    /** @type {__VLS_StyleScopedClasses['modal-backdrop']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.form, __VLS_intrinsics.form)({
+        ...{ onSubmit: (__VLS_ctx.saveEdit) },
+        ...{ onClick: () => { } },
+        ...{ class: "card form-card week-edit-modal" },
+        role: "dialog",
+        'aria-modal': "true",
+        'aria-labelledby': "week-edit-title",
+    });
+    /** @type {__VLS_StyleScopedClasses['card']} */ ;
+    /** @type {__VLS_StyleScopedClasses['form-card']} */ ;
+    /** @type {__VLS_StyleScopedClasses['week-edit-modal']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (__VLS_ctx.cancelEdit) },
+        type: "button",
+        ...{ class: "modal-close" },
+        'aria-label': "Close edit form",
+    });
+    /** @type {__VLS_StyleScopedClasses['modal-close']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
+        ...{ class: "eyebrow" },
+    });
+    /** @type {__VLS_StyleScopedClasses['eyebrow']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.h2, __VLS_intrinsics.h2)({
+        id: "week-edit-title",
+    });
+    __VLS_asFunctionalElement1(__VLS_intrinsics.label, __VLS_intrinsics.label)({
+        ...{ class: "field" },
+    });
+    /** @type {__VLS_StyleScopedClasses['field']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.input)({
+        maxlength: "100",
+        autofocus: true,
+    });
+    (__VLS_ctx.editingTitle);
+    __VLS_asFunctionalElement1(__VLS_intrinsics.label, __VLS_intrinsics.label)({
+        ...{ class: "field" },
+    });
+    /** @type {__VLS_StyleScopedClasses['field']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+        ...{ class: "optional" },
+    });
+    /** @type {__VLS_StyleScopedClasses['optional']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.input)({
+        maxlength: "60",
+        placeholder: "e.g. Morning routine",
+    });
+    (__VLS_ctx.editingGroup);
+    if (__VLS_ctx.editError) {
+        __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
+            ...{ class: "inline-error" },
+            role: "alert",
+        });
+        /** @type {__VLS_StyleScopedClasses['inline-error']} */ ;
+        (__VLS_ctx.editError);
+    }
+    __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
+        ...{ class: "week-edit-actions" },
+    });
+    /** @type {__VLS_StyleScopedClasses['week-edit-actions']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (__VLS_ctx.cancelEdit) },
+        type: "button",
+        ...{ class: "edit-cancel" },
+        disabled: (__VLS_ctx.editSaving),
+    });
+    /** @type {__VLS_StyleScopedClasses['edit-cancel']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        type: "submit",
+        ...{ class: "edit-save" },
+        disabled: (__VLS_ctx.editSaving || !__VLS_ctx.editingTitle.trim()),
+    });
+    /** @type {__VLS_StyleScopedClasses['edit-save']} */ ;
+    (__VLS_ctx.editSaving ? 'Saving…' : 'Save');
+}
+// @ts-ignore
+[editingTodo, cancelEdit, cancelEdit, cancelEdit, saveEdit, editingTitle, editingTitle, editingGroup, editError, editError, editSaving, editSaving, editSaving,];
+var __VLS_3;
 // @ts-ignore
 [];
 const __VLS_export = (await import('vue')).defineComponent({});

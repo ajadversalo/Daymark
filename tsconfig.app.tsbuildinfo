@@ -1,1 +1,1 @@
-{"root":["./src/env.d.ts","./src/main.ts","./src/sync.ts","./src/types.ts","./src/app.vue","./src/views/dashboard.vue","./src/views/settings.vue","./src/views/week.vue"],"version":"5.9.3"}
+{"root":["./src/env.d.ts","./src/main.ts","./src/sync.ts","./src/types.ts","./src/app.vue","./src/views/dashboard.vue","./src/views/month.vue","./src/views/settings.vue","./src/views/week.vue"],"version":"5.9.3"}

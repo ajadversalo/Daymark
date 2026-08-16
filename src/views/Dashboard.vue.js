@@ -47,12 +47,27 @@ const displayItems = computed(() => {
         }
         group.todos.push(todo);
     }
-    return entries;
+    for (const group of groups.values()) {
+        group.todos.sort((a, b) => Number(Boolean(a.completed)) - Number(Boolean(b.completed)));
+    }
+    return entries.sort((a, b) => {
+        const completionOrder = Number(a.todos.every(todo => Boolean(todo.completed))) - Number(b.todos.every(todo => Boolean(todo.completed)));
+        if (completionOrder)
+            return completionOrder;
+        return Number(Boolean(b.todos[0].group_name?.trim())) - Number(Boolean(a.todos[0].group_name?.trim()));
+    });
 });
 const overallProgress = computed(() => {
     if (!todaysTodos.value.length)
         return 0;
     return Math.round(todaysTodos.value.reduce((total, todo) => total + taskPercentage(todo), 0) / todaysTodos.value.length);
+});
+const overallProgressColor = computed(() => {
+    if (overallProgress.value <= 33)
+        return '#6377e8';
+    if (overallProgress.value <= 67)
+        return '#4f9a76';
+    return '#d5a72f';
 });
 const progressSeconds = ref(Object.fromEntries((initialCache ?? []).map(todo => [todo.id, Number(todo.elapsed_seconds) || 0])));
 const activeTodo = ref(null);
@@ -291,7 +306,7 @@ __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
 /** @type {__VLS_StyleScopedClasses['overall-progress']} */ ;
 __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
     ...{ class: "progress-pie" },
-    ...{ style: ({ '--overall-progress': __VLS_ctx.overallProgress + '%' }) },
+    ...{ style: ({ '--overall-progress': __VLS_ctx.overallProgress + '%', '--overall-color': __VLS_ctx.overallProgressColor }) },
 });
 /** @type {__VLS_StyleScopedClasses['progress-pie']} */ ;
 __VLS_asFunctionalElement1(__VLS_intrinsics.strong, __VLS_intrinsics.strong)({});
@@ -398,6 +413,13 @@ else {
                 ...{ class: "group-summary-progress" },
             });
             /** @type {__VLS_StyleScopedClasses['group-summary-progress']} */ ;
+            if (__VLS_ctx.groupPercentage(item.todos) === 100) {
+                __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                    ...{ class: "completion-check" },
+                    'aria-hidden': "true",
+                });
+                /** @type {__VLS_StyleScopedClasses['completion-check']} */ ;
+            }
             __VLS_asFunctionalElement1(__VLS_intrinsics.strong, __VLS_intrinsics.strong)({});
             (__VLS_ctx.groupPercentage(item.todos));
             __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
@@ -439,7 +461,7 @@ else {
                                 throw 0;
                             return (__VLS_ctx.toggleGroupedTodo(todo));
                             // @ts-ignore
-                            [dateLabel, overallProgress, overallProgress, overallProgress, todaysTodos, todaysTodos, todaysTodos, todaysTodos, todaysTodos, compactList, compactList, compactList, toggleCompactList, saveError, saveError, loading, error, error, displayItems, groupPercentage, groupPercentage, groupPercentage, toggleGroupedTodo,];
+                            [dateLabel, overallProgress, overallProgress, overallProgress, todaysTodos, todaysTodos, todaysTodos, todaysTodos, todaysTodos, overallProgressColor, compactList, compactList, compactList, toggleCompactList, saveError, saveError, loading, error, error, displayItems, groupPercentage, groupPercentage, groupPercentage, groupPercentage, toggleGroupedTodo,];
                         } },
                     type: "checkbox",
                     checked: (Boolean(todo.completed)),
@@ -482,7 +504,17 @@ else {
                 /** @type {__VLS_StyleScopedClasses['task-meta']} */ ;
                 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
                 (todo.title);
-                __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
+                __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                    ...{ class: "task-percentage" },
+                });
+                /** @type {__VLS_StyleScopedClasses['task-percentage']} */ ;
+                if (__VLS_ctx.taskPercentage(todo) === 100) {
+                    __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                        ...{ class: "completion-check" },
+                        'aria-hidden': "true",
+                    });
+                    /** @type {__VLS_StyleScopedClasses['completion-check']} */ ;
+                }
                 (__VLS_ctx.taskPercentage(todo));
                 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
                     ...{ class: "task-progress" },
@@ -502,7 +534,7 @@ else {
                 /** @type {__VLS_StyleScopedClasses['task-status']} */ ;
                 (todo.completed ? 'Completed ✓' : __VLS_ctx.taskTimeLabel(todo));
                 // @ts-ignore
-                [taskPercentage, taskPercentage, taskPercentage, taskTimeLabel,];
+                [taskPercentage, taskPercentage, taskPercentage, taskPercentage, taskTimeLabel,];
             }
         }
         // @ts-ignore
