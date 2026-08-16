@@ -19,11 +19,11 @@ const initialCache = readCachedTodos(todayKey.value)
 const todos = ref<Todo[]>(initialCache ?? []); const loading = ref(initialCache === null); const error = ref(''); const saveError = ref('')
 const compactList = ref(localStorage.getItem('daymark-compact-list') === 'true')
 function toggleCompactList() { compactList.value = !compactList.value; localStorage.setItem('daymark-compact-list', String(compactList.value)) }
-const manualTodoOrder = ref<number[]>([])
+const manuallySorted = ref(false)
+const completedAtLastSort = ref<number[]>([])
 function sortCompletedLast() {
-  manualTodoOrder.value = [...todaysTodos.value]
-    .sort((a, b) => Number(Boolean(a.completed)) - Number(Boolean(b.completed)))
-    .map(todo => todo.id)
+  completedAtLastSort.value = todaysTodos.value.filter(todo => Boolean(todo.completed)).map(todo => todo.id)
+  manuallySorted.value = true
 }
 const todayIndex = computed(() => today.value.getDay())
 const dateLabel = computed(() => today.value.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }))
@@ -31,17 +31,24 @@ const todaysTodos = computed(() => todos.value.filter(t => t.one_time ? !t.compl
 type DisplayItem = { key: string; title: string; todos: Todo[] }
 const displayItems = computed<DisplayItem[]>(() => {
   const entries: DisplayItem[] = []; const groups = new Map<string, DisplayItem>()
-  const order = new Map(manualTodoOrder.value.map((id, index) => [id, index]))
-  const orderedTodos = manualTodoOrder.value.length
-    ? [...todaysTodos.value].sort((a, b) => (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER))
-    : todaysTodos.value
-  for (const todo of orderedTodos) {
+  for (const todo of todaysTodos.value) {
     const name = todo.group_name?.trim()
     if (!name) { entries.push({ key: `todo-${todo.id}`, title: todo.title, todos: [todo] }); continue }
     const normalized = name.toLocaleLowerCase()
     let group = groups.get(normalized)
     if (!group) { group = { key: `group-${normalized}`, title: name, todos: [] }; groups.set(normalized, group); entries.push(group) }
     group.todos.push(todo)
+  }
+  if (manuallySorted.value) {
+    const completed = new Set(completedAtLastSort.value)
+    for (const group of groups.values()) {
+      group.todos.sort((a, b) => Number(completed.has(a.id)) - Number(completed.has(b.id)))
+    }
+    entries.sort((a, b) => {
+      const aComplete = a.todos.every(todo => completed.has(todo.id))
+      const bComplete = b.todos.every(todo => completed.has(todo.id))
+      return Number(aComplete) - Number(bComplete)
+    })
   }
   return entries
 })
