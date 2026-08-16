@@ -19,13 +19,23 @@ const initialCache = readCachedTodos(todayKey.value)
 const todos = ref<Todo[]>(initialCache ?? []); const loading = ref(initialCache === null); const error = ref(''); const saveError = ref('')
 const compactList = ref(localStorage.getItem('daymark-compact-list') === 'true')
 function toggleCompactList() { compactList.value = !compactList.value; localStorage.setItem('daymark-compact-list', String(compactList.value)) }
+const manualTodoOrder = ref<number[]>([])
+function sortCompletedLast() {
+  manualTodoOrder.value = [...todaysTodos.value]
+    .sort((a, b) => Number(Boolean(a.completed)) - Number(Boolean(b.completed)))
+    .map(todo => todo.id)
+}
 const todayIndex = computed(() => today.value.getDay())
 const dateLabel = computed(() => today.value.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }))
 const todaysTodos = computed(() => todos.value.filter(t => t.one_time ? !t.completed : t.days.includes(todayIndex.value)))
 type DisplayItem = { key: string; title: string; todos: Todo[] }
 const displayItems = computed<DisplayItem[]>(() => {
   const entries: DisplayItem[] = []; const groups = new Map<string, DisplayItem>()
-  for (const todo of todaysTodos.value) {
+  const order = new Map(manualTodoOrder.value.map((id, index) => [id, index]))
+  const orderedTodos = manualTodoOrder.value.length
+    ? [...todaysTodos.value].sort((a, b) => (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER))
+    : todaysTodos.value
+  for (const todo of orderedTodos) {
     const name = todo.group_name?.trim()
     if (!name) { entries.push({ key: `todo-${todo.id}`, title: todo.title, todos: [todo] }); continue }
     const normalized = name.toLocaleLowerCase()
@@ -33,14 +43,7 @@ const displayItems = computed<DisplayItem[]>(() => {
     if (!group) { group = { key: `group-${normalized}`, title: name, todos: [] }; groups.set(normalized, group); entries.push(group) }
     group.todos.push(todo)
   }
-  for (const group of groups.values()) {
-    group.todos.sort((a, b) => Number(Boolean(a.completed)) - Number(Boolean(b.completed)))
-  }
-  return entries.sort((a, b) => {
-    const completionOrder = Number(a.todos.every(todo => Boolean(todo.completed))) - Number(b.todos.every(todo => Boolean(todo.completed)))
-    if (completionOrder) return completionOrder
-    return Number(Boolean(b.todos[0].group_name?.trim())) - Number(Boolean(a.todos[0].group_name?.trim()))
-  })
+  return entries
 })
 const overallProgress = computed(() => {
   if (!todaysTodos.value.length) return 0
@@ -214,7 +217,7 @@ function playCompletionChime() {
     </div>
   </section>
   <section class="card focus-card" :class="{ 'compact-list': compactList }" aria-live="polite">
-    <div class="card-head"><div><p class="eyebrow">Today’s focus</p><h2>{{ todaysTodos.length }} {{ todaysTodos.length === 1 ? 'task' : 'tasks' }}</h2></div><div class="list-head-actions"><span class="list-readonly">Select a task to begin</span><button v-if="todaysTodos.length" class="density-toggle" :aria-pressed="compactList" @click="toggleCompactList">{{ compactList ? 'Comfortable' : 'Condense' }}</button></div></div>
+    <div class="card-head"><div><p class="eyebrow">Today’s focus</p><h2>{{ todaysTodos.length }} {{ todaysTodos.length === 1 ? 'task' : 'tasks' }}</h2></div><div class="list-head-actions"><span class="list-readonly">Select a task to begin</span><button v-if="todaysTodos.length" class="density-toggle" :aria-pressed="compactList" @click="toggleCompactList">{{ compactList ? 'Comfortable' : 'Condense' }}</button><button v-if="todaysTodos.length" class="sort-button" aria-label="Sort completed tasks last" title="Sort completed tasks last" @click="sortCompletedLast"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4h7M3 8h5M3 12h3M11 7v6m0 0-2-2m2 2 2-2"/></svg></button></div></div>
     <p v-if="saveError" class="save-error" role="alert">Progress isn’t saving: {{ saveError }}</p>
     <p v-if="loading" class="state">Gathering your day…</p>
     <div v-else-if="error" class="state error"><strong>We couldn’t reach your list.</strong><br>{{ error }}</div>
