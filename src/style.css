@@ -123,7 +123,7 @@ body{background:#f3f3f4}
 .focus-complete .task-meta>span:last-child,.focus-complete .task-status{color:var(--green)}
 .focus-complete .task-progress>span{background:var(--green)}
 .task-percentage{display:inline-flex;align-items:center;gap:6px}.completion-check{position:relative;display:inline-block;flex:none;width:18px;height:18px;border:1px solid #c4931e;border-radius:50%;background:linear-gradient(145deg,#f4d477,#d5a72f);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 1px 2px rgba(83,61,10,.18);color:transparent;font-size:0}.completion-check::after{content:'';position:absolute;width:4px;height:7px;left:6px;top:3px;border-right:2px solid #24282e;border-bottom:2px solid #24282e;transform:rotate(45deg)}
-.progress-pie{background:conic-gradient(var(--green) var(--overall-progress),#dedfe3 0)}
+.progress-pie{background:var(--overall-color,var(--green))}
 .timer-ring{background:conic-gradient(var(--green) var(--timer-progress),#dedfe3 0)}
 .settings-link:hover,.settings-link.router-link-active,.week-link:hover,.week-link.router-link-active{background:var(--green);color:#fff}
 .schedule-picker button.active{border-color:var(--green);background:#eaedff;color:var(--ink)}
@@ -135,5 +135,5 @@ body{background:#f3f3f4}
 [data-theme="dark"] .task-progress>span,[data-theme="dark"] .group-progress>span{background:var(--green)}
 [data-theme="dark"] .focus-complete .task-meta>span:last-child,[data-theme="dark"] .focus-complete .task-status{color:var(--green)}
 [data-theme="dark"] .focus-complete .task-progress>span{background:var(--green)}
-[data-theme="dark"] .progress-pie{background:conic-gradient(var(--green) var(--overall-progress),#42464d 0)}
+[data-theme="dark"] .progress-pie{background:var(--overall-color,var(--green))}
 [data-theme="dark"] .settings-link:hover,[data-theme="dark"] .settings-link.router-link-active,[data-theme="dark"] .week-link:hover,[data-theme="dark"] .week-link.router-link-active{background:var(--green);color:#fff}

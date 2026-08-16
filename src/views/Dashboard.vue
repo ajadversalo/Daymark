@@ -33,11 +33,23 @@ const displayItems = computed<DisplayItem[]>(() => {
     if (!group) { group = { key: `group-${normalized}`, title: name, todos: [] }; groups.set(normalized, group); entries.push(group) }
     group.todos.push(todo)
   }
-  return entries.sort((a, b) => Number(Boolean(b.todos[0].group_name?.trim())) - Number(Boolean(a.todos[0].group_name?.trim())))
+  for (const group of groups.values()) {
+    group.todos.sort((a, b) => Number(Boolean(a.completed)) - Number(Boolean(b.completed)))
+  }
+  return entries.sort((a, b) => {
+    const completionOrder = Number(a.todos.every(todo => Boolean(todo.completed))) - Number(b.todos.every(todo => Boolean(todo.completed)))
+    if (completionOrder) return completionOrder
+    return Number(Boolean(b.todos[0].group_name?.trim())) - Number(Boolean(a.todos[0].group_name?.trim()))
+  })
 })
 const overallProgress = computed(() => {
   if (!todaysTodos.value.length) return 0
   return Math.round(todaysTodos.value.reduce((total, todo) => total + taskPercentage(todo), 0) / todaysTodos.value.length)
+})
+const overallProgressColor = computed(() => {
+  if (overallProgress.value <= 33) return '#6377e8'
+  if (overallProgress.value <= 67) return '#4f9a76'
+  return '#d5a72f'
 })
 const progressSeconds = ref<Record<number, number>>(Object.fromEntries((initialCache ?? []).map(todo => [todo.id, Number(todo.elapsed_seconds) || 0])))
 const activeTodo = ref<Todo | null>(null)
@@ -195,7 +207,7 @@ function playCompletionChime() {
       role="img"
       :aria-label="`${overallProgress}% overall progress across ${todaysTodos.length} tasks`"
     >
-      <div class="progress-pie" :style="{ '--overall-progress': overallProgress + '%' }">
+      <div class="progress-pie" :style="{ '--overall-progress': overallProgress + '%', '--overall-color': overallProgressColor }">
         <strong>{{ overallProgress }}%</strong>
       </div>
       <span>Overall progress</span>
