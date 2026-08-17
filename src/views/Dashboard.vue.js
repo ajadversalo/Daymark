@@ -26,6 +26,12 @@ const error = ref('');
 const saveError = ref('');
 const compactList = ref(localStorage.getItem('daymark-compact-list') === 'true');
 function toggleCompactList() { compactList.value = !compactList.value; localStorage.setItem('daymark-compact-list', String(compactList.value)); }
+const manuallySorted = ref(false);
+const completedAtLastSort = ref([]);
+function sortCompletedLast() {
+    completedAtLastSort.value = todaysTodos.value.filter(todo => Boolean(todo.completed)).map(todo => todo.id);
+    manuallySorted.value = true;
+}
 const todayIndex = computed(() => today.value.getDay());
 const dateLabel = computed(() => today.value.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }));
 const todaysTodos = computed(() => todos.value.filter(t => t.one_time ? !t.completed : t.days.includes(todayIndex.value)));
@@ -47,28 +53,32 @@ const displayItems = computed(() => {
         }
         group.todos.push(todo);
     }
-    for (const group of groups.values()) {
-        group.todos.sort((a, b) => Number(Boolean(a.completed)) - Number(Boolean(b.completed)));
+    if (manuallySorted.value) {
+        const completed = new Set(completedAtLastSort.value);
+        for (const group of groups.values()) {
+            group.todos.sort((a, b) => Number(completed.has(a.id)) - Number(completed.has(b.id)));
+        }
+        entries.sort((a, b) => {
+            const aComplete = a.todos.every(todo => completed.has(todo.id));
+            const bComplete = b.todos.every(todo => completed.has(todo.id));
+            return Number(aComplete) - Number(bComplete);
+        });
     }
-    return entries.sort((a, b) => {
-        const completionOrder = Number(a.todos.every(todo => Boolean(todo.completed))) - Number(b.todos.every(todo => Boolean(todo.completed)));
-        if (completionOrder)
-            return completionOrder;
-        return Number(Boolean(b.todos[0].group_name?.trim())) - Number(Boolean(a.todos[0].group_name?.trim()));
-    });
+    return entries;
 });
 const overallProgress = computed(() => {
     if (!todaysTodos.value.length)
         return 0;
     return Math.round(todaysTodos.value.reduce((total, todo) => total + taskPercentage(todo), 0) / todaysTodos.value.length);
 });
-const overallProgressColor = computed(() => {
-    if (overallProgress.value <= 33)
+function progressColor(percentage) {
+    if (percentage <= 33)
         return '#6377e8';
-    if (overallProgress.value <= 67)
+    if (percentage <= 67)
         return '#4f9a76';
     return '#d5a72f';
-});
+}
+const overallProgressColor = computed(() => progressColor(overallProgress.value));
 const progressSeconds = ref(Object.fromEntries((initialCache ?? []).map(todo => [todo.id, Number(todo.elapsed_seconds) || 0])));
 const activeTodo = ref(null);
 const secondsLeft = ref(30 * 60);
@@ -344,10 +354,45 @@ if (__VLS_ctx.todaysTodos.length) {
     __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
         ...{ onClick: (__VLS_ctx.toggleCompactList) },
         ...{ class: "density-toggle" },
+        'aria-label': (__VLS_ctx.compactList ? 'Use comfortable spacing' : 'Use condensed spacing'),
+        title: (__VLS_ctx.compactList ? 'Comfortable spacing' : 'Condensed spacing'),
         'aria-pressed': (__VLS_ctx.compactList),
     });
     /** @type {__VLS_StyleScopedClasses['density-toggle']} */ ;
-    (__VLS_ctx.compactList ? 'Comfortable' : 'Condense');
+    if (__VLS_ctx.compactList) {
+        __VLS_asFunctionalElement1(__VLS_intrinsics.svg, __VLS_intrinsics.svg)({
+            viewBox: "0 0 24 24",
+            'aria-hidden': "true",
+        });
+        __VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+            d: "M5 5h14M5 12h14M5 19h14",
+        });
+    }
+    else {
+        __VLS_asFunctionalElement1(__VLS_intrinsics.svg, __VLS_intrinsics.svg)({
+            viewBox: "0 0 24 24",
+            'aria-hidden': "true",
+        });
+        __VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+            d: "M5 7h14M5 12h14M5 17h14",
+        });
+    }
+}
+if (__VLS_ctx.todaysTodos.length) {
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (__VLS_ctx.sortCompletedLast) },
+        ...{ class: "sort-button" },
+        'aria-label': "Sort completed tasks last",
+        title: "Sort completed tasks last",
+    });
+    /** @type {__VLS_StyleScopedClasses['sort-button']} */ ;
+    __VLS_asFunctionalElement1(__VLS_intrinsics.svg, __VLS_intrinsics.svg)({
+        viewBox: "0 0 24 24",
+        'aria-hidden': "true",
+    });
+    __VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+        d: "M4 7h10M4 12h7M4 17h4M17 5v14m0 0-3-3m3 3 3-3",
+    });
 }
 if (__VLS_ctx.saveError) {
     __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
@@ -403,7 +448,32 @@ else {
             });
             /** @type {__VLS_StyleScopedClasses['group-details']} */ ;
             __VLS_asFunctionalElement1(__VLS_intrinsics.summary, __VLS_intrinsics.summary)({});
+            __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                ...{ class: "group-summary-main" },
+            });
+            /** @type {__VLS_StyleScopedClasses['group-summary-main']} */ ;
             __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
+            __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
+                ...{ class: "group-title" },
+            });
+            /** @type {__VLS_StyleScopedClasses['group-title']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.svg, __VLS_intrinsics.svg)({
+                ...{ class: "group-icon" },
+                viewBox: "0 0 24 24",
+                'aria-hidden': "true",
+            });
+            /** @type {__VLS_StyleScopedClasses['group-icon']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.circle)({
+                cx: "9",
+                cy: "8",
+                r: "3",
+            });
+            __VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+                d: "M3.5 19v-1.5A4.5 4.5 0 0 1 8 13h2a4.5 4.5 0 0 1 4.5 4.5V19",
+            });
+            __VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+                d: "M15 5.2a3 3 0 0 1 0 5.6M17 13a4.5 4.5 0 0 1 3.5 4.4V19",
+            });
             __VLS_asFunctionalElement1(__VLS_intrinsics.strong, __VLS_intrinsics.strong)({});
             (item.title);
             __VLS_asFunctionalElement1(__VLS_intrinsics.small, __VLS_intrinsics.small)({});
@@ -423,11 +493,6 @@ else {
             __VLS_asFunctionalElement1(__VLS_intrinsics.strong, __VLS_intrinsics.strong)({});
             (__VLS_ctx.groupPercentage(item.todos));
             __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
-                ...{ class: "group-chevron" },
-                'aria-hidden': "true",
-            });
-            /** @type {__VLS_StyleScopedClasses['group-chevron']} */ ;
-            __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
                 ...{ class: "group-progress" },
                 role: "progressbar",
                 'aria-label': (`${item.title} group progress`),
@@ -437,7 +502,7 @@ else {
             });
             /** @type {__VLS_StyleScopedClasses['group-progress']} */ ;
             __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
-                ...{ style: ({ width: __VLS_ctx.groupPercentage(item.todos) + '%' }) },
+                ...{ style: ({ width: __VLS_ctx.groupPercentage(item.todos) + '%', backgroundColor: __VLS_ctx.progressColor(__VLS_ctx.groupPercentage(item.todos)) }) },
             });
             __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
                 ...{ class: "group-items" },
@@ -461,7 +526,7 @@ else {
                                 throw 0;
                             return (__VLS_ctx.toggleGroupedTodo(todo));
                             // @ts-ignore
-                            [dateLabel, overallProgress, overallProgress, overallProgress, todaysTodos, todaysTodos, todaysTodos, todaysTodos, todaysTodos, overallProgressColor, compactList, compactList, compactList, toggleCompactList, saveError, saveError, loading, error, error, displayItems, groupPercentage, groupPercentage, groupPercentage, groupPercentage, toggleGroupedTodo,];
+                            [dateLabel, overallProgress, overallProgress, overallProgress, todaysTodos, todaysTodos, todaysTodos, todaysTodos, todaysTodos, todaysTodos, overallProgressColor, compactList, compactList, compactList, compactList, compactList, toggleCompactList, sortCompletedLast, saveError, saveError, loading, error, error, displayItems, groupPercentage, groupPercentage, groupPercentage, groupPercentage, groupPercentage, progressColor, toggleGroupedTodo,];
                         } },
                     type: "checkbox",
                     checked: (Boolean(todo.completed)),
@@ -526,7 +591,7 @@ else {
                 });
                 /** @type {__VLS_StyleScopedClasses['task-progress']} */ ;
                 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
-                    ...{ style: ({ width: __VLS_ctx.taskPercentage(todo) + '%' }) },
+                    ...{ style: ({ width: __VLS_ctx.taskPercentage(todo) + '%', backgroundColor: __VLS_ctx.progressColor(__VLS_ctx.taskPercentage(todo)) }) },
                 });
                 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
                     ...{ class: "task-status" },
@@ -534,7 +599,7 @@ else {
                 /** @type {__VLS_StyleScopedClasses['task-status']} */ ;
                 (todo.completed ? 'Completed ✓' : __VLS_ctx.taskTimeLabel(todo));
                 // @ts-ignore
-                [taskPercentage, taskPercentage, taskPercentage, taskPercentage, taskTimeLabel,];
+                [progressColor, taskPercentage, taskPercentage, taskPercentage, taskPercentage, taskPercentage, taskTimeLabel,];
             }
         }
         // @ts-ignore

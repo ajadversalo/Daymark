@@ -9,6 +9,7 @@ const editingTitle = ref('');
 const editingGroup = ref('');
 const editSaving = ref(false);
 const editError = ref('');
+const updateError = ref('');
 function startOfWeek(date) {
     const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     start.setDate(start.getDate() - ((start.getDay() + 6) % 7) + weekOffset.value * 7);
@@ -81,6 +82,18 @@ async function saveEdit() {
     }
     finally {
         editSaving.value = false;
+    }
+}
+async function toggleComplete(todo, date) {
+    const previous = Boolean(todo.completed);
+    todo.completed = !previous;
+    try {
+        await api('PATCH', { id: todo.id, date: isoDate(date), completed: Boolean(todo.completed) });
+        updateError.value = '';
+    }
+    catch (cause) {
+        todo.completed = previous;
+        updateError.value = cause instanceof Error ? cause.message : 'Could not update the item';
     }
 }
 onMounted(loadWeek);
@@ -156,7 +169,15 @@ else if (__VLS_ctx.error) {
     __VLS_asFunctionalElement1(__VLS_intrinsics.br)({});
     (__VLS_ctx.error);
 }
-else {
+if (__VLS_ctx.updateError) {
+    __VLS_asFunctionalElement1(__VLS_intrinsics.p, __VLS_intrinsics.p)({
+        ...{ class: "save-error" },
+        role: "alert",
+    });
+    /** @type {__VLS_StyleScopedClasses['save-error']} */ ;
+    (__VLS_ctx.updateError);
+}
+if (!__VLS_ctx.loading && !__VLS_ctx.error) {
     __VLS_asFunctionalElement1(__VLS_intrinsics.section, __VLS_intrinsics.section)({
         ...{ class: "week-grid" },
         'aria-label': "Weekly tasks",
@@ -202,25 +223,34 @@ else {
                 /** @type {__VLS_StyleScopedClasses['complete']} */ ;
                 __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
                     ...{ onClick: (...[$event]) => {
-                            if (!!(__VLS_ctx.loading))
+                            if (!(!__VLS_ctx.loading && !__VLS_ctx.error))
                                 throw 0;
-                            if (!!(__VLS_ctx.error))
+                            if (!!(!day.todos.length))
+                                throw 0;
+                            return (__VLS_ctx.toggleComplete(todo, day.date));
+                            // @ts-ignore
+                            [loading, loading, error, error, error, updateError, updateError, days, isoDate, isoDate, isoDate, dayProgress, dayProgress, toggleComplete,];
+                        } },
+                    ...{ class: "week-check" },
+                    'aria-label': (`${todo.completed ? 'Mark incomplete' : 'Mark done'}: ${todo.title}`),
+                    'aria-pressed': (Boolean(todo.completed)),
+                });
+                /** @type {__VLS_StyleScopedClasses['week-check']} */ ;
+                (todo.completed ? '✓' : '');
+                __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+                    ...{ onClick: (...[$event]) => {
+                            if (!(!__VLS_ctx.loading && !__VLS_ctx.error))
                                 throw 0;
                             if (!!(!day.todos.length))
                                 throw 0;
                             return (__VLS_ctx.beginEdit(todo));
                             // @ts-ignore
-                            [loading, error, error, days, isoDate, isoDate, isoDate, dayProgress, dayProgress, beginEdit,];
+                            [beginEdit,];
                         } },
                     ...{ class: "week-item" },
                     'aria-label': (`Edit ${todo.title}`),
                 });
                 /** @type {__VLS_StyleScopedClasses['week-item']} */ ;
-                __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
-                    ...{ class: "week-check" },
-                });
-                /** @type {__VLS_StyleScopedClasses['week-check']} */ ;
-                (todo.completed ? '✓' : '');
                 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
                 __VLS_asFunctionalElement1(__VLS_intrinsics.strong, __VLS_intrinsics.strong)({});
                 (todo.title);

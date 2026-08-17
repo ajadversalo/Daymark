@@ -26,7 +26,6 @@ function statusFor(todos) {
         return 'none';
     return todos.every(todo => taskProgress(todo) === 100) ? 'complete' : 'partial';
 }
-function statusIcon(status) { return { none: '☹', partial: '📈', complete: '🏆' }[status]; }
 function statusLabel(day) { return `${day.date.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}: ${day.status}`; }
 async function loadMonth() {
     loading.value = true;
@@ -155,9 +154,87 @@ else {
             'aria-hidden': "true",
         });
         /** @type {__VLS_StyleScopedClasses['status-icon']} */ ;
-        (__VLS_ctx.statusIcon(day.status));
+        if (day.status === 'none') {
+            __VLS_asFunctionalElement1(__VLS_intrinsics.svg, __VLS_intrinsics.svg)({
+                ...{ class: "sad-face-icon" },
+                viewBox: "0 0 64 64",
+            });
+            /** @type {__VLS_StyleScopedClasses['sad-face-icon']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.circle)({
+                cx: "32",
+                cy: "32",
+                r: "29",
+            });
+            __VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+                d: "M15 23c0 5 3 8 7 8s7-3 7-8M35 23c0 5 3 8 7 8s7-3 7-8M18 47c8-8 20-8 28 0",
+            });
+        }
+        else if (day.status === 'partial') {
+            __VLS_asFunctionalElement1(__VLS_intrinsics.svg, __VLS_intrinsics.svg)({
+                ...{ class: "partial-check-icon" },
+                viewBox: "0 0 64 64",
+            });
+            /** @type {__VLS_StyleScopedClasses['partial-check-icon']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.defs, __VLS_intrinsics.defs)({});
+            __VLS_asFunctionalElement1(__VLS_intrinsics.linearGradient, __VLS_intrinsics.linearGradient)({
+                id: (`partial-gradient-${__VLS_ctx.isoDate(day.date)}`),
+                x1: "10",
+                y1: "7",
+                x2: "54",
+                y2: "57",
+                gradientUnits: "userSpaceOnUse",
+            });
+            __VLS_asFunctionalElement1(__VLS_intrinsics.stop)({
+                'stop-color': "#ef3323",
+            });
+            __VLS_asFunctionalElement1(__VLS_intrinsics.stop)({
+                offset: "1",
+                'stop-color': "#f6bd32",
+            });
+            __VLS_asFunctionalElement1(__VLS_intrinsics.g, __VLS_intrinsics.g)({
+                stroke: (`url(#partial-gradient-${__VLS_ctx.isoDate(day.date)})`),
+            });
+            __VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+                d: "M22 8A26 26 0 1 1 8 43M8 29c.3-4 1.5-7.7 3.4-11",
+            });
+            __VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+                d: "m20 33 9 9 18-20",
+            });
+        }
+        else {
+            __VLS_asFunctionalElement1(__VLS_intrinsics.svg, __VLS_intrinsics.svg)({
+                ...{ class: "trophy-icon" },
+                viewBox: "0 0 72 72",
+            });
+            /** @type {__VLS_StyleScopedClasses['trophy-icon']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+                ...{ class: "trophy-handles" },
+                d: "M18 15H8v14c0 10 6 16 16 16M54 15h10v14c0 10-6 16-16 16",
+            });
+            /** @type {__VLS_StyleScopedClasses['trophy-handles']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+                ...{ class: "trophy-cup" },
+                d: "M20 8h32v25c0 13-7 21-16 23-9-2-16-10-16-23Z",
+            });
+            /** @type {__VLS_StyleScopedClasses['trophy-cup']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+                ...{ class: "trophy-stem" },
+                d: "M31 54v6l-4 7h18l-4-7v-6",
+            });
+            /** @type {__VLS_StyleScopedClasses['trophy-stem']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+                ...{ class: "trophy-base" },
+                d: "M23 66h26v5H23z",
+            });
+            /** @type {__VLS_StyleScopedClasses['trophy-base']} */ ;
+            __VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+                ...{ class: "trophy-star" },
+                d: "m36 18 4 6 7 2-5 5v8l-6-3-6 3v-8l-5-5 7-2Z",
+            });
+            /** @type {__VLS_StyleScopedClasses['trophy-star']} */ ;
+        }
         // @ts-ignore
-        [days, isoDate, isoDate, isoDate, statusLabel, statusIcon,];
+        [days, isoDate, isoDate, isoDate, isoDate, isoDate, statusLabel,];
     }
 }
 __VLS_asFunctionalElement1(__VLS_intrinsics.div, __VLS_intrinsics.div)({
@@ -171,18 +248,91 @@ __VLS_asFunctionalElement1(__VLS_intrinsics.i, __VLS_intrinsics.i)({
     'aria-hidden': "true",
 });
 /** @type {__VLS_StyleScopedClasses['status-icon']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.svg, __VLS_intrinsics.svg)({
+    ...{ class: "sad-face-icon" },
+    viewBox: "0 0 64 64",
+});
+/** @type {__VLS_StyleScopedClasses['sad-face-icon']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.circle)({
+    cx: "32",
+    cy: "32",
+    r: "29",
+});
+__VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+    d: "M15 23c0 5 3 8 7 8s7-3 7-8M35 23c0 5 3 8 7 8s7-3 7-8M18 47c8-8 20-8 28 0",
+});
 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
 __VLS_asFunctionalElement1(__VLS_intrinsics.i, __VLS_intrinsics.i)({
     ...{ class: "status-icon" },
     'aria-hidden': "true",
 });
 /** @type {__VLS_StyleScopedClasses['status-icon']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.svg, __VLS_intrinsics.svg)({
+    ...{ class: "partial-check-icon" },
+    viewBox: "0 0 64 64",
+});
+/** @type {__VLS_StyleScopedClasses['partial-check-icon']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.defs, __VLS_intrinsics.defs)({});
+__VLS_asFunctionalElement1(__VLS_intrinsics.linearGradient, __VLS_intrinsics.linearGradient)({
+    id: "partial-gradient-legend",
+    x1: "10",
+    y1: "7",
+    x2: "54",
+    y2: "57",
+    gradientUnits: "userSpaceOnUse",
+});
+__VLS_asFunctionalElement1(__VLS_intrinsics.stop)({
+    'stop-color': "#ef3323",
+});
+__VLS_asFunctionalElement1(__VLS_intrinsics.stop)({
+    offset: "1",
+    'stop-color': "#f6bd32",
+});
+__VLS_asFunctionalElement1(__VLS_intrinsics.g, __VLS_intrinsics.g)({
+    stroke: "url(#partial-gradient-legend)",
+});
+__VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+    d: "M22 8A26 26 0 1 1 8 43M8 29c.3-4 1.5-7.7 3.4-11",
+});
+__VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+    d: "m20 33 9 9 18-20",
+});
 __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({});
 __VLS_asFunctionalElement1(__VLS_intrinsics.i, __VLS_intrinsics.i)({
     ...{ class: "status-icon" },
     'aria-hidden': "true",
 });
 /** @type {__VLS_StyleScopedClasses['status-icon']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.svg, __VLS_intrinsics.svg)({
+    ...{ class: "trophy-icon" },
+    viewBox: "0 0 72 72",
+});
+/** @type {__VLS_StyleScopedClasses['trophy-icon']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+    ...{ class: "trophy-handles" },
+    d: "M18 15H8v14c0 10 6 16 16 16M54 15h10v14c0 10-6 16-16 16",
+});
+/** @type {__VLS_StyleScopedClasses['trophy-handles']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+    ...{ class: "trophy-cup" },
+    d: "M20 8h32v25c0 13-7 21-16 23-9-2-16-10-16-23Z",
+});
+/** @type {__VLS_StyleScopedClasses['trophy-cup']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+    ...{ class: "trophy-stem" },
+    d: "M31 54v6l-4 7h18l-4-7v-6",
+});
+/** @type {__VLS_StyleScopedClasses['trophy-stem']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+    ...{ class: "trophy-base" },
+    d: "M23 66h26v5H23z",
+});
+/** @type {__VLS_StyleScopedClasses['trophy-base']} */ ;
+__VLS_asFunctionalElement1(__VLS_intrinsics.path)({
+    ...{ class: "trophy-star" },
+    d: "m36 18 4 6 7 2-5 5v8l-6-3-6 3v-8l-5-5 7-2Z",
+});
+/** @type {__VLS_StyleScopedClasses['trophy-star']} */ ;
 // @ts-ignore
 [];
 const __VLS_export = (await import('vue')).defineComponent({});

@@ -56,11 +56,12 @@ const overallProgress = computed(() => {
   if (!todaysTodos.value.length) return 0
   return Math.round(todaysTodos.value.reduce((total, todo) => total + taskPercentage(todo), 0) / todaysTodos.value.length)
 })
-const overallProgressColor = computed(() => {
-  if (overallProgress.value <= 33) return '#6377e8'
-  if (overallProgress.value <= 67) return '#4f9a76'
+function progressColor(percentage: number) {
+  if (percentage <= 33) return '#6377e8'
+  if (percentage <= 67) return '#4f9a76'
   return '#d5a72f'
-})
+}
+const overallProgressColor = computed(() => progressColor(overallProgress.value))
 const progressSeconds = ref<Record<number, number>>(Object.fromEntries((initialCache ?? []).map(todo => [todo.id, Number(todo.elapsed_seconds) || 0])))
 const activeTodo = ref<Todo | null>(null)
 const secondsLeft = ref(30 * 60)
@@ -224,7 +225,7 @@ function playCompletionChime() {
     </div>
   </section>
   <section class="card focus-card" :class="{ 'compact-list': compactList }" aria-live="polite">
-    <div class="card-head"><div><p class="eyebrow">Today’s focus</p><h2>{{ todaysTodos.length }} {{ todaysTodos.length === 1 ? 'task' : 'tasks' }}</h2></div><div class="list-head-actions"><span class="list-readonly">Select a task to begin</span><button v-if="todaysTodos.length" class="density-toggle" :aria-pressed="compactList" @click="toggleCompactList">{{ compactList ? 'Comfortable' : 'Condense' }}</button><button v-if="todaysTodos.length" class="sort-button" aria-label="Sort completed tasks last" title="Sort completed tasks last" @click="sortCompletedLast"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M4 12h7M4 17h4M17 5v14m0 0-3-3m3 3 3-3"/></svg></button></div></div>
+    <div class="card-head"><div><p class="eyebrow">Today’s focus</p><h2>{{ todaysTodos.length }} {{ todaysTodos.length === 1 ? 'task' : 'tasks' }}</h2></div><div class="list-head-actions"><span class="list-readonly">Select a task to begin</span><button v-if="todaysTodos.length" class="density-toggle" :aria-label="compactList ? 'Use comfortable spacing' : 'Use condensed spacing'" :title="compactList ? 'Comfortable spacing' : 'Condensed spacing'" :aria-pressed="compactList" @click="toggleCompactList"><svg v-if="compactList" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M5 12h14M5 19h14"/></svg><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button><button v-if="todaysTodos.length" class="sort-button" aria-label="Sort completed tasks last" title="Sort completed tasks last" @click="sortCompletedLast"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M4 12h7M4 17h4M17 5v14m0 0-3-3m3 3 3-3"/></svg></button></div></div>
     <p v-if="saveError" class="save-error" role="alert">Progress isn’t saving: {{ saveError }}</p>
     <p v-if="loading" class="state">Gathering your day…</p>
     <div v-else-if="error" class="state error"><strong>We couldn’t reach your list.</strong><br>{{ error }}</div>
@@ -232,8 +233,10 @@ function playCompletionChime() {
     <ul v-else class="todo-list">
       <li v-for="item in displayItems" :key="item.key" :class="{ 'focus-complete': item.todos.length === 1 && item.todos[0].completed, 'task-group': Boolean(item.todos[0].group_name) }">
         <details v-if="item.todos[0].group_name" class="group-details">
-          <summary><span><strong>{{ item.title }}</strong><small>{{ item.todos.filter(todo => todo.completed).length }} of {{ item.todos.length }} done</small></span><span class="group-summary-progress"><span v-if="groupPercentage(item.todos) === 100" class="completion-check" aria-hidden="true">✓</span><strong>{{ groupPercentage(item.todos) }}%</strong><span class="group-chevron" aria-hidden="true">⌄</span></span></summary>
-          <span class="group-progress" role="progressbar" :aria-label="`${item.title} group progress`" :aria-valuenow="groupPercentage(item.todos)" aria-valuemin="0" aria-valuemax="100"><span :style="{ width: groupPercentage(item.todos) + '%' }"></span></span>
+          <summary>
+            <span class="group-summary-main"><span><span class="group-title"><svg class="group-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19v-1.5A4.5 4.5 0 0 1 8 13h2a4.5 4.5 0 0 1 4.5 4.5V19"/><path d="M15 5.2a3 3 0 0 1 0 5.6M17 13a4.5 4.5 0 0 1 3.5 4.4V19"/></svg><strong>{{ item.title }}</strong></span><small>{{ item.todos.filter(todo => todo.completed).length }} of {{ item.todos.length }} done</small></span><span class="group-summary-progress"><span v-if="groupPercentage(item.todos) === 100" class="completion-check" aria-hidden="true">✓</span><strong>{{ groupPercentage(item.todos) }}%</strong></span></span>
+            <span class="group-progress" role="progressbar" :aria-label="`${item.title} group progress`" :aria-valuenow="groupPercentage(item.todos)" aria-valuemin="0" aria-valuemax="100"><span :style="{ width: groupPercentage(item.todos) + '%', backgroundColor: progressColor(groupPercentage(item.todos)) }"></span></span>
+          </summary>
           <div class="group-items">
             <label v-for="todo in item.todos" :key="todo.id" :class="{ complete: todo.completed }">
               <input type="checkbox" :checked="Boolean(todo.completed)" @change="toggleGroupedTodo(todo)"><span class="check">✓</span><span>{{ todo.title }}</span>
@@ -243,7 +246,7 @@ function playCompletionChime() {
         <button v-else class="task-open" @click="openTimer(item.todos[0])">
           <template v-for="todo in item.todos" :key="todo.id">
           <span class="task-meta"><span>{{ todo.title }}</span><span class="task-percentage"><span v-if="taskPercentage(todo) === 100" class="completion-check" aria-hidden="true">✓</span>{{ taskPercentage(todo) }}%</span></span>
-          <span class="task-progress" role="progressbar" :aria-label="`${todo.title} progress`" :aria-valuenow="taskPercentage(todo)" aria-valuemin="0" aria-valuemax="100"><span :style="{ width: taskPercentage(todo) + '%' }"></span></span>
+          <span class="task-progress" role="progressbar" :aria-label="`${todo.title} progress`" :aria-valuenow="taskPercentage(todo)" aria-valuemin="0" aria-valuemax="100"><span :style="{ width: taskPercentage(todo) + '%', backgroundColor: progressColor(taskPercentage(todo)) }"></span></span>
           <span class="task-status">{{ todo.completed ? 'Completed ✓' : taskTimeLabel(todo) }}</span>
           </template>
         </button>
